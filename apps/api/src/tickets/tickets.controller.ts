@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
 
 @Controller('tickets')
@@ -12,5 +12,10 @@ export class TicketsController {
       description: body.description,
       userId: body.userId,
     });
+  }
+
+  @Get()
+  list() {
+    return this.service.listTickets();
   }
 }
