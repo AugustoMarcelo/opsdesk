@@ -4,12 +4,15 @@ import { db } from '../db/client';
 import { tickets, ticketHistory } from '../db/schema';
 import { Injectable } from '@nestjs/common';
 import { redis } from '../cache/redis.client';
+import type { InferSelectModel } from 'drizzle-orm';
 
 type CreateTicketInput = {
   title: string;
   description: string;
   userId: string;
 };
+
+type Ticket = InferSelectModel<typeof tickets>;
 
 @Injectable()
 export class TicketsService {
@@ -60,7 +63,7 @@ export class TicketsService {
     const cached = await redis.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Ticket[];
     }
 
     const data = await db.select().from(tickets);
