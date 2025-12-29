@@ -7,7 +7,6 @@ async function run() {
   const ticket = await service.createTicket({
     title: 'Drizzle transaction test',
     description: 'ACID is working',
-    ownerId: '00000000-0000-0000-0000-000000000000',
     userId: '00000000-0000-0000-0000-000000000000',
   });
 
