@@ -1,7 +1,12 @@
 import 'dotenv/config';
 import { TicketsService } from '../tickets/tickets.service';
+import { TicketsGateway } from '../tickets/tickets.gateway';
+import { AuthorizationService } from '../auth/authorization.service';
 
-const service = new TicketsService();
+const service = new TicketsService(
+  new TicketsGateway(),
+  new AuthorizationService(),
+);
 
 async function run() {
   const ticket = await service.createTicket({
