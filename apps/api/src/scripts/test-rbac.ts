@@ -8,7 +8,6 @@ async function test(userId: string, label: string) {
     await service.createTicket({
       title: 'RBAC test',
       description: 'Should fail or suceed',
-      ownerId: '00000000-0000-0000-0000-000000000000',
       userId,
     });
 

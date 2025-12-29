@@ -5,7 +5,7 @@ import { tickets, ticketHistory } from '../db/schema';
 type CreateTicketInput = {
   title: string;
   description: string;
-  ownerId: string;
+  userId: string;
 };
 
 export class TicketsService {
@@ -27,7 +27,7 @@ export class TicketsService {
         .values({
           title: input.title,
           description: input.description,
-          ownerId: input.ownerId,
+          ownerId: input.userId,
         })
         .returning();
 
