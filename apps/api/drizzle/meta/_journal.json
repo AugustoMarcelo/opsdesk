@@ -8,6 +8,13 @@
       "when": 1766776266958,
       "tag": "0000_tricky_peter_quill",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767007969235,
+      "tag": "0001_typical_power_pack",
+      "breakpoints": true
     }
   ]
 }
