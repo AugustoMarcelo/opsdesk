@@ -1,6 +1,8 @@
+import { TicketsGateway } from './tickets.gateway';
 import { AuthorizationService } from '../auth/authorization.service';
 import { db } from '../db/client';
 import { tickets, ticketHistory } from '../db/schema';
+import { Injectable } from '@nestjs/common';
 
 type CreateTicketInput = {
   title: string;
@@ -8,8 +10,12 @@ type CreateTicketInput = {
   userId: string;
 };
 
+@Injectable()
 export class TicketsService {
-  private auth = new AuthorizationService();
+  constructor(
+    private gateway: TicketsGateway,
+    private auth: AuthorizationService,
+  ) {}
 
   async createTicket(input: CreateTicketInput & { userId: string }) {
     const allowed = await this.auth.userHasPermission(
@@ -21,7 +27,7 @@ export class TicketsService {
       throw new Error('Forbidden');
     }
 
-    return db.transaction(async (tx) => {
+    const ticket = await db.transaction(async (tx) => {
       const [ticket] = await tx
         .insert(tickets)
         .values({
@@ -38,5 +44,10 @@ export class TicketsService {
 
       return ticket;
     });
+
+    // 🔔 Emit event AFTER commit
+    this.gateway.ticketCreated(ticket);
+
+    return ticket;
   }
 }

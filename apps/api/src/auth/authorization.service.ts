@@ -1,7 +1,9 @@
 import { userRoles, rolePermissions, permissions } from '../db/schema';
 import { db } from '../db/client';
 import { eq } from 'drizzle-orm';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class AuthorizationService {
   async userHasPermission(
     userId: string,
