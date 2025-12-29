@@ -3,6 +3,7 @@ import { AuthorizationService } from '../auth/authorization.service';
 import { db } from '../db/client';
 import { tickets, ticketHistory } from '../db/schema';
 import { Injectable } from '@nestjs/common';
+import { redis } from '../cache/redis.client';
 
 type CreateTicketInput = {
   title: string;
@@ -48,6 +49,24 @@ export class TicketsService {
     // 🔔 Emit event AFTER commit
     this.gateway.ticketCreated(ticket);
 
+    await redis.del('tickets:all');
+
     return ticket;
+  }
+
+  async listTickets() {
+    const cacheKey = 'tickets:all';
+
+    const cached = await redis.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
+    const data = await db.select().from(tickets);
+
+    await redis.set(cacheKey, JSON.stringify(data), 'EX', 30); // Cache for 30 seconds
+
+    return data;
   }
 }

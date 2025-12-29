@@ -27,6 +27,7 @@
     "@nestjs/websockets": "^11.1.10",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
+    "ioredis": "^5.8.2",
     "nestjs-pino": "^4.5.0",
     "pg": "^8.16.3",
     "pino-http": "^11.0.0",
