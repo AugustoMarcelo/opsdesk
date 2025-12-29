@@ -5,6 +5,7 @@ import { tickets, ticketHistory } from '../db/schema';
 import { Injectable } from '@nestjs/common';
 import { redis } from '../cache/redis.client';
 import type { InferSelectModel } from 'drizzle-orm';
+import { RabbitMQService } from '../messaging/rabbitmq.service';
 
 type CreateTicketInput = {
   title: string;
@@ -19,6 +20,7 @@ export class TicketsService {
   constructor(
     private gateway: TicketsGateway,
     private auth: AuthorizationService,
+    private readonly rabbit: RabbitMQService,
   ) {}
 
   async createTicket(input: CreateTicketInput & { userId: string }) {
@@ -48,6 +50,8 @@ export class TicketsService {
 
       return ticket;
     });
+
+    this.rabbit.publish('ticket.created', ticket);
 
     // 🔔 Emit event AFTER commit
     this.gateway.ticketCreated(ticket);
