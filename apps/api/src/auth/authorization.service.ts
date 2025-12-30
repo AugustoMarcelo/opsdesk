@@ -9,13 +9,15 @@ export class AuthorizationService {
     userId: string,
     permissionName: string,
   ): Promise<boolean> {
-    const result = await db
-      .select()
+    const rows = await db
+      .select({
+        name: permissions.name,
+      })
       .from(userRoles)
       .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
       .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
       .where(eq(userRoles.userId, userId));
 
-    return result.some((row) => row.permissions.name === permissionName);
+    return rows.some((row) => row.name === permissionName);
   }
 }
