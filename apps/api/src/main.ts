@@ -1,3 +1,4 @@
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
@@ -9,6 +10,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
+
+  app.useGlobalGuards(app.get(JwtAuthGuard));
 
   app.useGlobalPipes(
     new ValidationPipe({

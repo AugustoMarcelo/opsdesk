@@ -6,6 +6,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { MetricsInterceptor } from './metrics/metrics.interceptor';
 import { RabbitMQModule } from './messaging/rabbitmq.module';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UsersModule } from './users/users.module';
     RabbitMQModule,
     TicketsModule,
     UsersModule,
+    AuthModule,
   ],
   providers: [
     {
