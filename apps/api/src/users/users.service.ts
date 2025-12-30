@@ -8,7 +8,13 @@ import { eq, asc, desc } from 'drizzle-orm';
 @Injectable()
 export class UsersService {
   async createUser(input: CreateUserDto) {
-    const [user] = await db.insert(users).values(input).returning();
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...input,
+        passwordHash: 'hashed-password-placeholder', // TODO: Replace with actual hashing
+      })
+      .returning();
 
     return user;
   }

@@ -29,8 +29,7 @@ export class TicketsController {
     return this.service.createTicket({
       title: body.title,
       description: body.description,
-      // TODO: Replace with actual user ID from auth
-      userId: req.user?.id || '00000000-0000-0000-0000-000000000000',
+      userId: req.user?.id,
     });
   }
 
