@@ -1,8 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+
+interface TicketResponse {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  ownerId: string;
+  createdAt: string;
+}
 
 describe('API e2e', () => {
   let app: INestApplication<App>;
@@ -29,7 +38,9 @@ describe('API e2e', () => {
       })
       .expect(201);
 
-    expect(res.body.id).toBeDefined();
+    const body = res.body as TicketResponse;
+
+    expect(body.id).toBeDefined();
   });
 
   it('GET /v1/tickets should return a list of tickets', () => {
