@@ -17,6 +17,7 @@ import { redis } from '../cache/redis.client';
 import { asc, desc, eq, type InferSelectModel } from 'drizzle-orm';
 import { RabbitMQService } from '../messaging/rabbitmq.service';
 import { ListTicketsDto } from './dto/list-tickets.dto';
+import { canAccessTicket } from '../auth/ownership';
 
 type CreateTicketInput = {
   title: string;
@@ -141,10 +142,10 @@ export class TicketsService {
     return response;
   }
 
-  async getTicketById(id: string) {
+  async getTicketById(id: string, user: { id: string; roles: string[] }) {
     const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id));
 
-    if (!ticket) {
+    if (!ticket || !canAccessTicket(user, ticket)) {
       throw new NotFoundException('Ticket not found');
     }
 

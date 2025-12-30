@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { db } from '../db/client';
-import { users } from '../db/schema';
+import { users, userRoles, roles } from '../db/schema';
 import { compare } from 'bcrypt';
 
 @Injectable()
@@ -22,8 +22,20 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    const currentUserRoles = await db
+      .select({
+        roleName: roles.name,
+      })
+      .from(userRoles)
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(eq(userRoles.userId, user.id));
+
     return {
-      accessToken: this.jwt.sign({ sub: user.id, email: user.email }),
+      accessToken: this.jwt.sign({
+        sub: user.id,
+        email: user.email,
+        roles: currentUserRoles.map((r) => r.roleName),
+      }),
     };
   }
 }
