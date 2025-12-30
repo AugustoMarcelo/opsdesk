@@ -50,7 +50,11 @@ export class TicketsController {
   @ApiOperation({ summary: 'Get ticket by ID' })
   @ApiResponse({ status: 404, description: 'Ticket not found' })
   @Get(':id')
-  async getById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.getTicketById(id);
+  @Permissions(Perm.TicketRead)
+  async getById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.getTicketById(id, req.user);
   }
 }
