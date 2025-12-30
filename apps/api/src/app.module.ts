@@ -5,14 +5,16 @@ import { TicketsModule } from './tickets/tickets.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { MetricsInterceptor } from './metrics/metrics.interceptor';
 import { RabbitMQModule } from './messaging/rabbitmq.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
     LoggerModule,
     HealthModule,
-    TicketsModule,
     MetricsModule,
     RabbitMQModule,
+    TicketsModule,
+    UsersModule,
   ],
   providers: [
     {
