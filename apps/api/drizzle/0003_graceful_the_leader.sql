@@ -1,0 +1,1 @@
+ALTER TABLE "tickets" ADD COLUMN "status" text DEFAULT 'open' NOT NULL;

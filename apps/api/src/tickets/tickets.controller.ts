@@ -1,6 +1,16 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Req,
+  Param,
+} from '@nestjs/common';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
+import { ListTicketsDto } from './dto/list-tickets.dto';
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
 
 @Controller('tickets')
@@ -15,12 +25,20 @@ export class TicketsController {
     return this.service.createTicket({
       title: body.title,
       description: body.description,
-      userId: req.user.id,
+      // TODO: Replace with actual user ID from auth
+      userId: req.user?.id || '00000000-0000-0000-0000-000000000000',
     });
   }
 
   @Get()
-  list() {
-    return this.service.listTickets();
+  async list(@Query() query: ListTicketsDto) {
+    const tickets = await this.service.listTickets(query);
+
+    return tickets;
+  }
+
+  @Get(':id')
+  async getById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getTicketById(id);
   }
 }
