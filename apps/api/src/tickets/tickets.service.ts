@@ -103,7 +103,6 @@ export class TicketsService {
 
   async listTickets(query: ListTicketsDto) {
     const { offset, limit, order } = query;
-    console.log('Listing tickets with', { offset, limit, order });
 
     const cacheKey = `tickets:all:offset:${offset}:limit:${limit}:order:${order}`;
 
