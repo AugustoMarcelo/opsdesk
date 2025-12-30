@@ -1,11 +1,22 @@
+import { TicketCreatedEvent } from '../../../../libs/events/ticket-created.event';
 import { TicketsGateway } from './tickets.gateway';
 import { AuthorizationService } from '../auth/authorization.service';
 import { db } from '../db/client';
-import { tickets, ticketHistory } from '../db/schema';
-import { Injectable } from '@nestjs/common';
+import {
+  tickets,
+  ticketHistory,
+  ticketStatusHistory,
+  auditLog,
+} from '../db/schema';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { redis } from '../cache/redis.client';
-import type { InferSelectModel } from 'drizzle-orm';
+import { asc, desc, eq, type InferSelectModel } from 'drizzle-orm';
 import { RabbitMQService } from '../messaging/rabbitmq.service';
+import { ListTicketsDto } from './dto/list-tickets.dto';
 
 type CreateTicketInput = {
   title: string;
@@ -30,7 +41,7 @@ export class TicketsService {
     );
 
     if (!allowed) {
-      throw new Error('Forbidden');
+      throw new ForbiddenException('User not authorized to create tickets');
     }
 
     const ticket = await db.transaction(async (tx) => {
@@ -39,6 +50,7 @@ export class TicketsService {
         .values({
           title: input.title,
           description: input.description,
+          status: 'open',
           ownerId: input.userId,
         })
         .returning();
@@ -48,10 +60,38 @@ export class TicketsService {
         action: 'CREATED',
       });
 
+      await tx.insert(ticketStatusHistory).values({
+        ticketId: ticket.id,
+        oldStatus: null,
+        newStatus: 'open',
+        changedBy: input.userId,
+      });
+
+      await tx.insert(auditLog).values({
+        entityType: 'ticket',
+        entityId: ticket.id,
+        action: 'ticket.created',
+        metadata: JSON.stringify({
+          title: ticket.title,
+          description: ticket.description,
+          status: ticket.status,
+        }),
+        performedBy: input.userId,
+      });
+
       return ticket;
     });
 
-    this.rabbit.publish('ticket.created', ticket);
+    this.rabbit.publish<TicketCreatedEvent>('ticket.created', {
+      event: 'ticket.created',
+      payload: {
+        id: ticket.id,
+        title: ticket.title,
+        description: ticket.description,
+        ownerId: ticket.ownerId,
+        createdAt: ticket.createdAt.toISOString(),
+      },
+    });
 
     // 🔔 Emit event AFTER commit
     this.gateway.ticketCreated(ticket);
@@ -61,8 +101,11 @@ export class TicketsService {
     return ticket;
   }
 
-  async listTickets() {
-    const cacheKey = 'tickets:all';
+  async listTickets(query: ListTicketsDto) {
+    const { offset, limit, order } = query;
+    console.log('Listing tickets with', { offset, limit, order });
+
+    const cacheKey = `tickets:all:offset:${offset}:limit:${limit}:order:${order}`;
 
     const cached = await redis.get(cacheKey);
 
@@ -70,10 +113,42 @@ export class TicketsService {
       return JSON.parse(cached) as Ticket[];
     }
 
-    const data = await db.select().from(tickets);
+    const items = await db
+      .select({
+        id: tickets.id,
+        title: tickets.title,
+        description: tickets.description,
+        ownerId: tickets.ownerId,
+        createdAt: tickets.createdAt,
+      })
+      .from(tickets)
+      .orderBy(
+        order === 'asc' ? asc(tickets.createdAt) : desc(tickets.createdAt),
+      )
+      .limit(limit)
+      .offset(offset);
 
-    await redis.set(cacheKey, JSON.stringify(data), 'EX', 30); // Cache for 30 seconds
+    const response = {
+      data: items,
+      meta: {
+        limit,
+        offset,
+        count: items.length,
+      },
+    };
 
-    return data;
+    await redis.set(cacheKey, JSON.stringify(response), 'EX', 30); // Cache for 30 seconds
+
+    return response;
+  }
+
+  async getTicketById(id: string) {
+    const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id));
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    return { data: ticket };
   }
 }
