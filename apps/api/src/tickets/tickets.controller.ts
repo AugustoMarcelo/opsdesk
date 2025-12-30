@@ -15,7 +15,7 @@ import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Tickets')
-@Controller('tickets')
+@Controller('/v1/tickets')
 export class TicketsController {
   constructor(private readonly service: TicketsService) {}
 

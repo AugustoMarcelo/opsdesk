@@ -13,7 +13,7 @@ import { ListUsersDto } from './dto/list-users.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Users')
-@Controller('users')
+@Controller('/v1/users')
 export class UsersController {
   constructor(private readonly service: UsersService) {}
 
