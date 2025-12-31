@@ -53,8 +53,8 @@ Each phase has clear learning goals and deliverables, evolving from fundamentals
 
 **Goal:** Design and bring up a clean “skeleton” with good separation.
 
-- Monorepo or multi-repo (API, realtime, worker).
-- Docker Compose with PostgreSQL + Redis.
+- [x] Monorepo or multi-repo (API, realtime, worker).
+- [x] Docker Compose with PostgreSQL + Redis.
 - Patterns:
   - Layered architecture (controller/service/repository).
   - DTOs, validation, standardized error responses.
@@ -282,24 +282,25 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US0.1 – Repository Bootstrap**
 
-- Create a monorepo with:
+- [x] Create a monorepo with:
   - `apps/api`
   - `apps/realtime`
   - `apps/worker`
   - `packages/shared`
-- Configure:
+
+- [x] Configure:
   - Node 20+
   - pnpm
   - eslint
   - prettier
   - editorconfig
   - commitlint (optional)
-- Setup NestJS in `apps/api` with a health endpoint `GET /health`.
-- Create `packages/shared` for shared types, DTOs and utilities.
+- [x] Setup NestJS in `apps/api` with a health endpoint `GET /health`.
+- [x] Create `packages/shared` for shared types, DTOs and utilities.
 
 **US0.2 – Base Docker Compose**
 
-- `docker-compose.yml` with:
+- [x] `docker-compose.yml` with:
   - PostgreSQL
   - Redis
   - RabbitMQ (plus optional admin UI)
@@ -312,8 +313,8 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US0.3 – Minimal Observability**
 
-- Structured logger (Pino or Winston) in the API.
-- Correlation ID (`request-id`) middleware/interceptor.
+- [x] Structured logger (Pino or Winston) in the API.
+- [x] Correlation ID (`request-id`) middleware/interceptor.
 
 ---
 
@@ -345,9 +346,9 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 **US2.1 – Ticket CRUD**
 
 - Endpoints:
-  - `POST /v1/tickets` (create)
-  - `GET /v1/tickets/:id` (details)
-  - `GET /v1/tickets` (list with pagination/filter/sort)
+  - [x] `POST /v1/tickets` (create)
+  - [x] `GET /v1/tickets/:id` (details)
+  - [x] `GET /v1/tickets` (list with pagination/filter/sort)
   - `PATCH /v1/tickets/:id` (edit title/description)
   - `PATCH /v1/tickets/:id/status` (change status)
 - Standardize:
@@ -414,7 +415,7 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US4.3 – Basic Scalability**
 
-- Redis pub/sub adapter for multi-instance support (optional/bonus).
+- [x] Redis pub/sub adapter for multi-instance support (optional/bonus).
 - Rate limiting per connection/event (minimal).
 
 ---
@@ -449,7 +450,7 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US6.1 – Domain Event Publishing**
 
-- On ticket creation: publish `ticket.created`.
+- [x] On ticket creation: publish `ticket.created`.
 - On status change: publish `ticket.status_changed`.
 - On message sent: publish `message.sent`.
 
@@ -472,7 +473,7 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US7.1 – Cache-Aside for Listings**
 
-- Cache `GET /v1/tickets` for common filter combinations (with TTL).
+- [x] Cache `GET /v1/tickets` for common filter combinations (with TTL).
 - Cache user permissions (with TTL).
 
 **US7.2 – Event-Based Invalidation**

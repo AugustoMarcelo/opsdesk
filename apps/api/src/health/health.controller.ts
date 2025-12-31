@@ -1,3 +1,4 @@
+import { Public } from './../auth/public.decorator';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -15,6 +16,7 @@ export class HealthController {
       timestamp: '2024-01-01T00:00:00.000Z',
     },
   })
+  @Public()
   @Get()
   check() {
     return {

@@ -1,4 +1,4 @@
-import { TicketCreatedEvent } from '../../../../libs/events/ticket-created.event';
+import { TicketCreatedEvent } from '../../../../packages/events/ticket-created.event';
 import { TicketsGateway } from './tickets.gateway';
 import { AuthorizationService } from '../auth/authorization.service';
 import { db } from '../db/client';
@@ -83,7 +83,7 @@ export class TicketsService {
       return ticket;
     });
 
-    this.rabbit.publish<TicketCreatedEvent>('ticket.created', {
+    const createdTicketEvent: TicketCreatedEvent = {
       event: 'ticket.created',
       payload: {
         id: ticket.id,
@@ -92,10 +92,15 @@ export class TicketsService {
         ownerId: ticket.ownerId,
         createdAt: ticket.createdAt.toISOString(),
       },
-    });
+    };
+
+    this.rabbit.publish<TicketCreatedEvent>(
+      'ticket.created',
+      createdTicketEvent,
+    );
 
     // 🔔 Emit event AFTER commit
-    this.gateway.ticketCreated(ticket);
+    this.gateway.ticketCreated(createdTicketEvent);
 
     await redis.del('tickets:all');
 

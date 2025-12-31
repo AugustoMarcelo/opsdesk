@@ -1,3 +1,4 @@
+import { RedisIoAdapter } from './realtime/redis-io.adapter';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -35,7 +36,9 @@ async function bootstrap() {
   app.use(requestIdMiddleware);
   app.useLogger(app.get(Logger));
 
-  await app.listen(process.env.PORT ?? 3000);
+  app.useWebSocketAdapter(new RedisIoAdapter(app));
+
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 
 void bootstrap();
