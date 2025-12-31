@@ -1,6 +1,12 @@
 import { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import * as amqp from 'amqplib';
 
+const RETRY_INTERVAL = 3000;
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection!: amqp.Connection;
   private channel!: amqp.Channel;
@@ -9,22 +15,36 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private readonly exchangeType = 'topic';
 
   async onModuleInit(): Promise<void> {
-    const url = process.env.RABBITMQ_URL!;
+    await this.connectWithRetry();
+  }
 
-    if (!url) {
-      throw new Error('RABBITMQ_URL is not defined');
+  private async connectWithRetry() {
+    while (true) {
+      try {
+        const url = process.env.RABBITMQ_URL!;
+
+        if (!url) {
+          throw new Error('RABBITMQ_URL is not defined');
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        this.connection = await amqp.connect(url);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        this.channel = await this.connection.createChannel();
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        await this.channel.assertExchange(this.exchange, this.exchangeType, {
+          durable: true,
+        });
+
+        console.log('[RabbitMQ] Connected');
+        break;
+      } catch {
+        console.error('[RabbitMQ] Connection failed. Retrying...');
+        await sleep(RETRY_INTERVAL);
+      }
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    this.connection = await amqp.connect(url);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    this.channel = await this.connection.createChannel();
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    await this.channel.assertExchange(this.exchange, this.exchangeType, {
-      durable: true,
-    });
   }
 
   publish<T>(routingKey: string, payload: T): void {

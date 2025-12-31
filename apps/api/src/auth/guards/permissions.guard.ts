@@ -1,3 +1,4 @@
+import { AuthenticatedRequest } from './../authenticated-request';
 import { PERMISSIONS_KEY } from './../decorators/permissions.decorator';
 import { AuthorizationService } from './../authorization.service';
 import {
@@ -16,7 +17,7 @@ export class PermissionsGuard implements CanActivate {
     private readonly authorizationService: AuthorizationService,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -26,24 +27,13 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const user = request.user as { id: string } | undefined;
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
 
-    for (const permission of requiredPermissions) {
-      const allowed = await this.authorizationService.userHasPermission(
-        user.id,
-        permission,
-      );
-
-      if (!allowed) {
-        throw new ForbiddenException(`Missing permission: ${permission}`);
-      }
-    }
-
-    return true;
+    return requiredPermissions.every((p) => user.permissions.includes(p));
   }
 }
