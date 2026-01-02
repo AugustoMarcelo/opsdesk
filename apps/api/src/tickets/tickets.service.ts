@@ -9,6 +9,7 @@ import {
   auditLog,
 } from '../db/schema';
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -155,5 +156,42 @@ export class TicketsService {
     }
 
     return { data: ticket };
+  }
+
+  async closeTicket(input: { ticketId: string; userId: string }) {
+    await db.transaction(async (tx) => {
+      const [ticket] = await tx
+        .select()
+        .from(tickets)
+        .where(eq(tickets.id, input.ticketId))
+        .limit(1);
+
+      if (!ticket) {
+        throw new NotFoundException('Ticket not found');
+      }
+
+      if (ticket.status === 'closed') {
+        throw new ConflictException('Ticket already closed');
+      }
+
+      await tx
+        .update(tickets)
+        .set({ status: 'closed' })
+        .where(eq(tickets.id, input.ticketId));
+
+      await tx.insert(ticketStatusHistory).values({
+        ticketId: input.ticketId,
+        oldStatus: ticket.status,
+        newStatus: 'closed',
+        changedBy: input.userId,
+      });
+
+      await tx.insert(auditLog).values({
+        entityType: 'ticket',
+        entityId: input.ticketId,
+        action: 'ticket.close',
+        performedBy: input.userId,
+      });
+    });
   }
 }
