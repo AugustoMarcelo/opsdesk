@@ -304,8 +304,8 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
   - PostgreSQL
   - Redis
   - RabbitMQ (plus optional admin UI)
-- Environment variables with `.env.example`.
-- Makefile / npm scripts:
+- [x] Environment variables with `.env.example`.
+- [x] Makefile / npm scripts:
   - `dev:up`
   - `dev:down`
   - `db:migrate`
