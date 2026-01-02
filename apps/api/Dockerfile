@@ -43,4 +43,5 @@ EXPOSE 3000
 # =========================
 # Start API
 # =========================
-CMD ["pnpm", "start:dev"]
+# CMD ["pnpm", "start:dev"]
+CMD [ "sh", "../../scripts/start-api.sh" ]
