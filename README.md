@@ -322,22 +322,22 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US1.1 – ERD and Migrations**
 
-- Entities/tables:
+- [x] Entities/tables:
   - `users`, `roles`, `permissions`, `user_roles`, `role_permissions`
   - `tickets`, `ticket_status_history`
   - `messages`
   - `audit_log`
-- Configure ORM (Prisma or TypeORM) with migrations.
+- [x] Configure ORM (Prisma or TypeORM) with migrations.
 - Seed:
-  - Roles: `admin`, `agent`, `customer`
-  - Basic permissions like `ticket:read`, `ticket:create`, `ticket:assign`, `ticket:close`, `message:send`
+  - [x] Roles: `admin`, `agent`, `customer`
+  - [x] Basic permissions like `ticket:read`, `ticket:create`, `ticket:assign`, `ticket:close`, `message:send`
 
 **US1.2 – Basic ACID Rules**
 
 - Transaction service for:
-  - Create ticket + initial status + audit log.
-  - Close ticket + history + audit log.
-- Automated test verifying rollback on failure (e.g. error when writing audit log).
+  - [x] Create ticket + initial status + audit log.
+  - [x] Close ticket + history + audit log.
+- [x] Automated test verifying rollback on failure (e.g. error when writing audit log).
 
 ---
 
