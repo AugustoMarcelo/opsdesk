@@ -41,6 +41,9 @@ worker-logs:
 # ============================
 # Database
 # ============================
+db-generate:
+	$(PNPM) --filter api db:generate
+
 db-migrate:
 	$(PNPM) --filter api db:migrate
 
@@ -51,3 +54,6 @@ db-reset:
 	$(COMPOSE) exec postgres psql -U opsdesk -d opsdesk -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 	$(MAKE) db-migrate
 	$(MAKE) db-seed
+
+db-studio:
+	$(PNPM) --filter api run db:studio
