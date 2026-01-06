@@ -1,3 +1,5 @@
+import { DatabaseModule } from './../db/database.module';
+import { UsersModule } from './../users/users.module';
 import { AuthorizationService } from './authorization.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
@@ -12,6 +14,8 @@ import { AuthController } from './auth.controller';
       secret: process.env.JWT_SECRET!,
       signOptions: { expiresIn: '1h' },
     }),
+    UsersModule,
+    DatabaseModule,
   ],
   providers: [AuthService, AuthorizationService, JwtStrategy, JwtAuthGuard],
   controllers: [AuthController],

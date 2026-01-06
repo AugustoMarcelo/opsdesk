@@ -7,7 +7,7 @@ import { asc, desc, eq, InferSelectModel } from 'drizzle-orm';
 type CreateTicketInput = {
   title: string;
   description: string;
-  status: 'open' | 'closed';
+  status?: 'open' | 'closed';
   userId: string;
 };
 
@@ -27,7 +27,7 @@ export class TicketsRepository {
       .values({
         title: data.title,
         description: data.description,
-        status: 'open',
+        status: data.status ?? 'open',
         ownerId: data.userId,
       })
       .returning();

@@ -29,6 +29,10 @@ api-dev:
 api-build:
 	$(PNPM) --filter api build
 
+api-tests:
+	$(PNPM) --filter api db:migrate:test
+	$(PNPM) --filter api test:e2e
+
 api-logs:
 	$(COMPOSE) logs -f api
 

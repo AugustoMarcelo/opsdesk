@@ -14,6 +14,7 @@
     "start:prod": "node dist/main",
     "db:seed:check": "ts-node src/db/seed-check.ts",
     "db:migrate": "drizzle-kit push",
+    "db:migrate:test": "dotenv -e .env.test -- drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:seed": "ts-node src/db/seed.ts",
     "db:studio": "drizzle-kit studio",

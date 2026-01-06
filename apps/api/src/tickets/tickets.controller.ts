@@ -38,7 +38,7 @@ export class TicketsController {
     return this.service.createTicket({
       title: body.title,
       description: body.description,
-      userId: req.user?.id,
+      user: req.user,
     });
   }
 

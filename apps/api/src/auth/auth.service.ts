@@ -1,18 +1,26 @@
+import { DatabaseService } from './../db/database.service';
+import { UsersRepository } from './../users/users.repository';
 import { rolePermissions } from './../db/schema/role-permissions';
 import { permissions } from './../db/schema/permissions';
 import { eq, inArray } from 'drizzle-orm';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { db } from '../db/client';
-import { users, userRoles, roles } from '../db/schema';
+import { userRoles, roles } from '../db/schema';
 import { compare } from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwt: JwtService) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly databaseService: DatabaseService,
+    private readonly usersRepo: UsersRepository,
+  ) {}
 
   async login(email: string, password: string) {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    const user = await this.usersRepo.findByEmail(
+      this.databaseService.db,
+      email,
+    );
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -24,7 +32,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const currentUserRoles = await db
+    const currentUserRoles = await this.databaseService.db
       .select({
         roleId: roles.id,
         roleName: roles.name,
@@ -33,7 +41,7 @@ export class AuthService {
       .innerJoin(roles, eq(userRoles.roleId, roles.id))
       .where(eq(userRoles.userId, user.id));
 
-    const currentUserPermissions = await db
+    const currentUserPermissions = await this.databaseService.db
       .select({
         permissionName: permissions.name,
       })

@@ -38,4 +38,10 @@ export class UsersRepository {
 
     return user ?? null;
   }
+
+  async findByEmail(db: DBExecutor, email: string) {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+
+    return user ?? null;
+  }
 }

@@ -10,17 +10,19 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { redis } from '../cache/redis.client';
 import { RabbitMQService } from '../messaging/rabbitmq.service';
 import { ListTicketsDto } from './dto/list-tickets.dto';
 import { canAccessTicket } from '../auth/ownership';
 import { DatabaseService } from '../db/database.service';
+import { Permissions } from '../../../../packages/shared/permissions';
 
 type CreateTicketInput = {
   title: string;
   description: string;
-  userId: string;
+  user: { id: string; roles: string[]; permissions: string[] };
 };
 
 type UpdateTicketInput = {
@@ -48,10 +50,7 @@ export class TicketsService {
   ) {}
 
   async createTicket(input: CreateTicketInput) {
-    const allowed = await this.auth.userHasPermission(
-      input.userId,
-      'ticket:create',
-    );
+    const allowed = input.user.permissions.includes(Permissions.TicketCreate);
 
     if (!allowed) {
       throw new ForbiddenException('User not authorized to create tickets');
@@ -62,7 +61,7 @@ export class TicketsService {
         title: input.title,
         description: input.description,
         status: 'open',
-        userId: input.userId,
+        userId: input.user.id,
       });
 
       await this.ticketHistoryRepo.add(tx, {
@@ -74,7 +73,7 @@ export class TicketsService {
         ticketId: ticket.id,
         oldStatus: null,
         newStatus: 'open',
-        changedBy: input.userId,
+        changedBy: input.user.id,
       });
 
       await this.auditRepo.log(tx, {
@@ -86,7 +85,7 @@ export class TicketsService {
           description: ticket.description,
           status: ticket.status,
         }),
-        performedBy: input.userId,
+        performedBy: input.user.id,
       });
 
       return ticket;
@@ -198,6 +197,10 @@ export class TicketsService {
 
     if (ticket.status === status) {
       throw new ConflictException(`Ticket already ${status}`);
+    }
+
+    if (!['open', 'closed'].includes(status)) {
+      throw new BadRequestException('Invalid status: ' + status);
     }
 
     await this.databaseService.db.transaction(async (tx) => {

@@ -45,6 +45,15 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - opsdesk
+
+  postgres_test:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: opsdesk_test
+      POSTGRES_USER: opsdesk
+      POSTGRES_PASSWORD: opsdesk
+    ports:
+      - "5433:5432"
   
   redis:
     image: redis:7
