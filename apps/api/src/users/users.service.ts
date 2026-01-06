@@ -1,26 +1,29 @@
+import { UsersRepository } from './users.repository';
+import { DatabaseService } from './../db/database.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersDto } from './dto/list-users.dto';
-import { db } from '../db/client';
-import { users } from '../db/schema';
-import { eq, asc, desc } from 'drizzle-orm';
+import { hash } from 'bcrypt';
 
 @Injectable()
 export class UsersService {
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly usersRepo: UsersRepository,
+  ) {}
+
   async createUser(input: CreateUserDto) {
-    const [user] = await db
-      .insert(users)
-      .values({
-        ...input,
-        passwordHash: 'hashed-password-placeholder', // TODO: Replace with actual hashing
-      })
-      .returning();
+    const passwordHash = await hash(input.password, 10);
+    const user = await this.usersRepo.create(this.databaseService.db, {
+      ...input,
+      password: passwordHash,
+    });
 
     return user;
   }
 
   async getUserById(id: string) {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const user = await this.usersRepo.findById(this.databaseService.db, id);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -30,14 +33,9 @@ export class UsersService {
   }
 
   async listUsers(query: ListUsersDto) {
-    const { offset, limit, order } = query;
+    const { offset, limit } = query;
 
-    const items = await db
-      .select()
-      .from(users)
-      .orderBy(order === 'asc' ? asc(users.createdAt) : desc(users.createdAt))
-      .limit(limit)
-      .offset(offset);
+    const items = await this.usersRepo.list(this.databaseService.db, query);
 
     return { data: items, meta: { offset, limit, count: items.length } };
   }

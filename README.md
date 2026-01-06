@@ -345,26 +345,26 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US2.1 – Ticket CRUD**
 
-- Endpoints:
+- [x] Endpoints:
   - [x] `POST /v1/tickets` (create)
   - [x] `GET /v1/tickets/:id` (details)
   - [x] `GET /v1/tickets` (list with pagination/filter/sort)
-  - `PATCH /v1/tickets/:id` (edit title/description)
-  - `PATCH /v1/tickets/:id/status` (change status)
-- Standardize:
-  - Response envelope
-  - Error format (RFC 7807 or custom)
+  - [x] `PATCH /v1/tickets/:id` (edit title/description)
+  - [x] `PATCH /v1/tickets/:id/status` (change status)
+- [x] Standardize:
+  - [x] Response envelope
+  - [x] Error format (RFC 7807 or custom)
 
 **US2.2 – Minimal User CRUD (admin-only later)**
 
-- `POST /v1/users` (create)
-- `GET /v1/users/:id`
-- `GET /v1/users`
+- [x] `POST /v1/users` (create)
+- [x] `GET /v1/users/:id`
+- [x] `GET /v1/users`
 
 **US2.3 – Documentation & Quality**
 
-- Swagger/OpenAPI with examples.
-- DTO validation using `class-validator` + pipes.
+- [x] Swagger/OpenAPI with examples.
+- [x] DTO validation using `class-validator` + pipes.
 - Basic e2e tests (supertest):
   - health
   - create ticket
