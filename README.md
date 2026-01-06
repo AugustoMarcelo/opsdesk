@@ -55,16 +55,16 @@ Each phase has clear learning goals and deliverables, evolving from fundamentals
 
 - [x] Monorepo or multi-repo (API, realtime, worker).
 - [x] Docker Compose with PostgreSQL + Redis.
-- Patterns:
-  - Layered architecture (controller/service/repository).
-  - DTOs, validation, standardized error responses.
-- Data modeling (ERD + normalization):
+- [x] Patterns:
+  - [x] Layered architecture (controller/service/repository).
+  - [x] DTOs, validation, standardized error responses.
+- [x] Data modeling (ERD + normalization):
   - `users`, `roles`, `permissions`, `user_roles`, `role_permissions`
   - `tickets`, `ticket_status_history`
   - `messages` (chat), `audit_log`
-- ACID transactions:
-  - Create ticket + register event + initial status in a single transaction.
-  - Close ticket + write history + audit in a single transaction.
+- [x] ACID transactions:
+  - [x] Create ticket + register event + initial status in a single transaction.
+  - [x] Close ticket + write history + audit in a single transaction.
 
 **Deliverables**
 
@@ -365,10 +365,10 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 - [x] Swagger/OpenAPI with examples.
 - [x] DTO validation using `class-validator` + pipes.
-- Basic e2e tests (supertest):
-  - health
-  - create ticket
-  - list tickets
+- [x] Basic e2e tests (supertest):
+  - [x] health
+  - [x] create ticket
+  - [x] list tickets
 
 ---
 
