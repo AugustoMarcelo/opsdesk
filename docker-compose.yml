@@ -107,6 +107,18 @@ services:
     networks:
       - opsdesk
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: opsdesk-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    networks:
+      - opsdesk
+
 volumes:
   postgres_data:
   rabbitmq_data:

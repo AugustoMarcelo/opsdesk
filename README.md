@@ -376,9 +376,9 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US3.1 – Simple JWT Auth (initial)**
 
-- Implement basic login (username/password from DB) to unblock the POC.
+- [x] Implement basic login (username/password from DB) to unblock the POC.
 - Issue JWT + optional refresh token.
-- Global auth guard on `/v1/*`.
+- [x] Global auth guard on `/v1/*`.
 
 **US3.2 – OIDC (Keycloak)**
 
@@ -388,12 +388,12 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 **US3.3 – Permission-Based RBAC**
 
-- Decorator `@Permissions(...)` + guard.
-- Authorization rules:
-  - Customer only accesses own tickets.
-  - Agent accesses assigned/team tickets (start with “any ticket” then refine).
-  - Admin accesses everything.
-- e2e tests for authorization (correct 403/404 responses).
+- [x] Decorator `@Permissions(...)` + guard.
+- [x] Authorization rules:
+  - [x] Customer only accesses own tickets.
+  - [x] Agent accesses assigned/team tickets (start with “any ticket” then refine).
+  - [x] Admin accesses everything.
+- [x] e2e tests for authorization (correct 403/404 responses).
 
 ---
 
