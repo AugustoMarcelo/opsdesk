@@ -1,15 +1,17 @@
 import { DatabaseModule } from './../db/database.module';
 import { UsersModule } from './../users/users.module';
 import { AuthorizationService } from './authorization.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { JwtStrategy } from './jwt.strategy';
+import { KeycloakJwtAuthGuard } from './keycloak-jwt-auth.guard';
+import { KeycloakJwtStrategy } from './keycloak-jwt.strategy';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
 @Module({
   imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET!,
       signOptions: { expiresIn: '1h' },
@@ -17,8 +19,13 @@ import { AuthController } from './auth.controller';
     UsersModule,
     DatabaseModule,
   ],
-  providers: [AuthService, AuthorizationService, JwtStrategy, JwtAuthGuard],
+  providers: [
+    AuthService,
+    AuthorizationService,
+    KeycloakJwtStrategy,
+    KeycloakJwtAuthGuard,
+  ],
   controllers: [AuthController],
-  exports: [JwtAuthGuard, AuthorizationService],
+  exports: [KeycloakJwtAuthGuard, AuthorizationService],
 })
 export class AuthModule {}

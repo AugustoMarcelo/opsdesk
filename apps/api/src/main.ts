@@ -1,5 +1,5 @@
 import { RedisIoAdapter } from './realtime/redis-io.adapter';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { KeycloakJwtAuthGuard } from './auth/keycloak-jwt-auth.guard';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
@@ -12,7 +12,7 @@ async function bootstrap() {
     bufferLogs: true,
   });
 
-  app.useGlobalGuards(app.get(JwtAuthGuard));
+  app.useGlobalGuards(app.get(KeycloakJwtAuthGuard));
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -6,26 +6,34 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersDto } from './dto/list-users.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { KeycloakJwtAuthGuard } from '../auth/keycloak-jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { Permissions } from '../auth/decorators/permissions.decorator';
+import { Permissions as Perm } from '../../../../packages/shared/permissions';
 
 @ApiTags('Users')
 @Controller('/v1/users')
+@UseGuards(KeycloakJwtAuthGuard, PermissionsGuard)
 export class UsersController {
   constructor(private readonly service: UsersService) {}
 
   @ApiOperation({ summary: 'Create user' })
   @ApiResponse({ status: 201, description: 'User created' })
   @Post()
+  @Permissions(Perm.UserCreate)
   async createUser(@Body() body: CreateUserDto) {
     return this.service.createUser(body);
   }
 
   @ApiOperation({ summary: 'List users' })
   @Get()
+  @Permissions(Perm.UserRead)
   async list(@Query() query: ListUsersDto) {
     return this.service.listUsers(query);
   }

@@ -114,6 +114,8 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - keycloak_data:/opt/keycloak/data
     ports:
       - "8080:8080"
     networks:
@@ -123,6 +125,7 @@ volumes:
   postgres_data:
   rabbitmq_data:
   grafana_data:
+  keycloak_data:
 
 networks:
   opsdesk:

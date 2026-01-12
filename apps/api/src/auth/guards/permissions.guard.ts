@@ -1,6 +1,5 @@
 import { AuthenticatedRequest } from './../authenticated-request';
 import { PERMISSIONS_KEY } from './../decorators/permissions.decorator';
-import { AuthorizationService } from './../authorization.service';
 import {
   CanActivate,
   ExecutionContext,
@@ -8,14 +7,10 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(
-    private readonly reflector: Reflector,
-    private readonly authorizationService: AuthorizationService,
-  ) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(

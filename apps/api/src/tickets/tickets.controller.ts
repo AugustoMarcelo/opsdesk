@@ -1,5 +1,4 @@
 import { UpdateTicketStatusDto } from './dto/update-ticket-status.dto';
-import { PermissionsGuard } from './../auth/guards/permissions.guard';
 import { Permissions } from './../auth/decorators/permissions.decorator';
 import { Permissions as Perm } from '../../../../packages/shared/permissions';
 import {
@@ -20,10 +19,12 @@ import { ListTicketsDto } from './dto/list-tickets.dto';
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { KeycloakJwtAuthGuard } from '../auth/keycloak-jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
 
 @ApiTags('Tickets')
 @Controller('/v1/tickets')
-@UseGuards(PermissionsGuard)
+@UseGuards(KeycloakJwtAuthGuard, PermissionsGuard)
 export class TicketsController {
   constructor(private readonly service: TicketsService) {}
 
