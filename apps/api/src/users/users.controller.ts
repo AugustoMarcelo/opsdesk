@@ -12,14 +12,14 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersDto } from './dto/list-users.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { KeycloakJwtAuthGuard } from '../auth/keycloak-jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { Permissions as Perm } from '../../../../packages/shared/permissions';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Users')
 @Controller('/v1/users')
-@UseGuards(KeycloakJwtAuthGuard, PermissionsGuard)
+@UseGuards(AuthGuard('jwt'), PermissionsGuard)
 export class UsersController {
   constructor(private readonly service: UsersService) {}
 

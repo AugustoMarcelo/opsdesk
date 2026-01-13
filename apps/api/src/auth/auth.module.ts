@@ -1,9 +1,8 @@
+import { AuthStrategyProvider } from './auth-strategy.provider';
 import { UserResolver } from './user-resolver.service';
 import { DatabaseModule } from './../db/database.module';
 import { UsersModule } from './../users/users.module';
 import { AuthorizationService } from './authorization.service';
-import { KeycloakJwtAuthGuard } from './keycloak-jwt-auth.guard';
-import { KeycloakJwtStrategy } from './keycloak-jwt.strategy';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -23,11 +22,10 @@ import { AuthController } from './auth.controller';
   providers: [
     AuthService,
     AuthorizationService,
-    KeycloakJwtStrategy,
-    KeycloakJwtAuthGuard,
+    AuthStrategyProvider,
     UserResolver,
   ],
   controllers: [AuthController],
-  exports: [KeycloakJwtAuthGuard, AuthorizationService],
+  exports: [AuthorizationService],
 })
 export class AuthModule {}

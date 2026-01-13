@@ -10,7 +10,7 @@ interface JwtUserPayload {
 }
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   validate(payload: JwtUserPayload) {
     return {
-      userId: payload.sub,
+      id: payload.sub,
       email: payload.email,
       roles: payload.roles,
       permissions: payload.permissions,

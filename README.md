@@ -384,7 +384,7 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 
 - [x] Add Keycloak in `docker-compose` (realm `opsdesk`).
 - [x] Configure OIDC client + JWKS validation in API.
-- Replace simple auth with OIDC (keep a “dev mode” option).
+- [x] Replace simple auth with OIDC (keep a “dev mode” option).
 
 **US3.3 – Permission-Based RBAC**
 
