@@ -22,5 +22,12 @@ export class CreateUserDto {
     description: 'Role ID of the user',
   })
   @IsUUID()
-  roleId: string;
+  roleId?: string;
+
+  @ApiProperty({
+    example: '123456',
+    description: 'External ID. Keycloak for this current solution',
+  })
+  @IsString()
+  externalId?: string;
 }

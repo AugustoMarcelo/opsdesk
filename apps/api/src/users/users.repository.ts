@@ -13,6 +13,7 @@ export class UsersRepository {
       .values({
         email: data.email,
         name: data.name,
+        externalId: data.externalId,
         passwordHash: data.password,
       })
       .returning();
@@ -41,6 +42,16 @@ export class UsersRepository {
 
   async findByEmail(db: DBExecutor, email: string) {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+
+    return user ?? null;
+  }
+
+  async findByExternalId(db: DBExecutor, externalId: string) {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.externalId, externalId))
+      .limit(1);
 
     return user ?? null;
   }

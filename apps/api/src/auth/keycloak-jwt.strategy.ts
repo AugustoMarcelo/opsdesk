@@ -3,10 +3,12 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable } from '@nestjs/common';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ROLE_PERMISSIONS } from './role-permissions.map';
+import { UserResolver } from './user-resolver.service';
 
 export interface KeycloakJwtPayload {
   sub: string;
-  email?: string;
+  name?: string;
+  email: string;
   preferred_username?: string;
   aud?: string | string[]; // Audience claim (can be string or array)
   realm_access?: {
@@ -24,7 +26,7 @@ export interface AuthenticatedUser {
 
 @Injectable()
 export class KeycloakJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor() {
+  constructor(private readonly userResolver: UserResolver) {
     const issuer = process.env.OIDC_ISSUER;
     // const audience = process.env.OIDC_AUDIENCE;
 
@@ -51,16 +53,30 @@ export class KeycloakJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: KeycloakJwtPayload): AuthenticatedUser {
+  async validate(payload: KeycloakJwtPayload): Promise<AuthenticatedUser> {
     const roles = payload.realm_access?.roles ?? [];
     const permissions = roles.flatMap((role) => ROLE_PERMISSIONS[role] ?? []);
 
     const user = {
+      sub: payload.sub,
       id: payload.sub,
       email: payload.email,
       roles,
       permissions,
     };
+
+    const keycloakUser = {
+      sub: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      preferred_username: payload.preferred_username,
+      roles,
+      permissions,
+    };
+
+    const resolvedUser = await this.userResolver.resolve(keycloakUser);
+
+    user.id = resolvedUser.id;
 
     return user;
   }

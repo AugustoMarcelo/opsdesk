@@ -1,3 +1,4 @@
+import { UserResolver } from './user-resolver.service';
 import { DatabaseModule } from './../db/database.module';
 import { UsersModule } from './../users/users.module';
 import { AuthorizationService } from './authorization.service';
@@ -24,6 +25,7 @@ import { AuthController } from './auth.controller';
     AuthorizationService,
     KeycloakJwtStrategy,
     KeycloakJwtAuthGuard,
+    UserResolver,
   ],
   controllers: [AuthController],
   exports: [KeycloakJwtAuthGuard, AuthorizationService],
