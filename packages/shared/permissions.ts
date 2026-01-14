@@ -1,6 +1,7 @@
 export const Permissions = {
   TicketCreate: 'ticket:create',
   TicketRead: 'ticket:read',
+  TicketReadOwn: 'ticket:read:own',
   TicketUpdate: 'ticket:update',
   TicketClose: 'ticket:close',
 
