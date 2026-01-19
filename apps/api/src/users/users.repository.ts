@@ -25,7 +25,12 @@ export class UsersRepository {
     const { offset, limit, order } = params;
 
     const items = await db
-      .select()
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        createdAt: users.createdAt,
+      })
       .from(users)
       .orderBy(order === 'asc' ? asc(users.createdAt) : desc(users.createdAt))
       .limit(limit)

@@ -3,6 +3,8 @@ import { AuditRepository } from './../audit/audit.repository';
 import { TicketStatusHistoryRepository } from './tickets-status-history.repository';
 import { Ticket, TicketsRepository } from './tickets.repository';
 import { TicketCreatedEvent } from '../../../../packages/events/ticket-created.event';
+import { TicketStatusChangedEvent } from '../../../../packages/events/ticket-status-changed.event';
+import { TicketUpdatedEvent } from '../../../../packages/events/ticket-updated.event';
 import { TicketsGateway } from './tickets.gateway';
 import { AuthorizationService } from '../auth/authorization.service';
 import {
@@ -18,6 +20,7 @@ import { ListTicketsDto } from './dto/list-tickets.dto';
 import { canAccessTicket } from '../auth/ownership';
 import { DatabaseService } from '../db/database.service';
 import { Permissions } from '../../../../packages/shared/permissions';
+import { CacheKeys } from '../cache/cache-keys';
 
 type CreateTicketInput = {
   title: string;
@@ -110,7 +113,8 @@ export class TicketsService {
     // 🔔 Emit event AFTER commit
     this.gateway.ticketCreated(createdTicketEvent);
 
-    await redis.del('tickets:all');
+    // Invalidate cache using pattern
+    await this.invalidateTicketsCache();
 
     return ticket;
   }
@@ -118,7 +122,7 @@ export class TicketsService {
   async listTickets(query: ListTicketsDto) {
     const { offset, limit, order } = query;
 
-    const cacheKey = `tickets:all:offset:${offset}:limit:${limit}:order:${order}`;
+    const cacheKey = CacheKeys.ticketsList({ offset, limit, order });
 
     const cached = await redis.get(cacheKey);
 
@@ -183,6 +187,26 @@ export class TicketsService {
         }),
       });
     });
+
+    // Publish ticket updated event
+    const updatedTicketEvent: TicketUpdatedEvent = {
+      event: 'ticket.updated',
+      payload: {
+        id,
+        title,
+        description,
+        updatedBy: user.id,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
+    this.rabbit.publish<TicketUpdatedEvent>(
+      'ticket.updated',
+      updatedTicketEvent,
+    );
+
+    // Invalidate cache
+    await this.invalidateTicketsCache();
   }
 
   async updateTicketStatus(
@@ -220,6 +244,26 @@ export class TicketsService {
         performedBy: user.id,
       });
     });
+
+    // Publish ticket status changed event
+    const statusChangedEvent: TicketStatusChangedEvent = {
+      event: 'ticket.status_changed',
+      payload: {
+        id,
+        oldStatus: ticket.status,
+        newStatus: status,
+        changedBy: user.id,
+        changedAt: new Date().toISOString(),
+      },
+    };
+
+    this.rabbit.publish<TicketStatusChangedEvent>(
+      'ticket.status_changed',
+      statusChangedEvent,
+    );
+
+    // Invalidate cache
+    await this.invalidateTicketsCache();
   }
 
   async closeTicket(input: { ticketId: string; userId: string }) {
@@ -255,5 +299,37 @@ export class TicketsService {
         performedBy: input.userId,
       });
     });
+
+    // Publish ticket status changed event
+    const statusChangedEvent: TicketStatusChangedEvent = {
+      event: 'ticket.status_changed',
+      payload: {
+        id: input.ticketId,
+        oldStatus: ticket.status,
+        newStatus: 'closed',
+        changedBy: input.userId,
+        changedAt: new Date().toISOString(),
+      },
+    };
+
+    this.rabbit.publish<TicketStatusChangedEvent>(
+      'ticket.status_changed',
+      statusChangedEvent,
+    );
+
+    // Invalidate cache
+    await this.invalidateTicketsCache();
+  }
+
+  /**
+   * Invalidate all tickets cache using Redis pattern matching
+   */
+  private async invalidateTicketsCache(): Promise<void> {
+    const pattern = CacheKeys.ticketsListPattern();
+    const keys = await redis.keys(pattern);
+
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
   }
 }

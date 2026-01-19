@@ -474,15 +474,15 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 **US7.1 – Cache-Aside for Listings**
 
 - [x] Cache `GET /v1/tickets` for common filter combinations (with TTL).
-- Cache user permissions (with TTL).
+- [x] Cache user permissions (with TTL).
 
 **US7.2 – Event-Based Invalidation**
 
-- On `ticket.*` events in worker → invalidate relevant keys.
+- [x] On `ticket.*` events in worker → invalidate relevant keys.
 
 **US7.3 – Measurement**
 
-- Measure latency with and without cache (simple script).
+- [x] Measure latency with and without cache (simple script).
 
 ---
 
