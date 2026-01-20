@@ -8,3 +8,4 @@ export * from './user-roles';
 export * from './audit-log';
 export * from './ticket-status-history';
 export * from './messages';
+export * from './processed-events';

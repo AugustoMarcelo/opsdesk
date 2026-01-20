@@ -35,6 +35,7 @@ async function main() {
     'ticket:update',
     'ticket:assign',
     'ticket:close',
+    'message:send',
   ];
 
   const insertedPermissions = await db
@@ -54,7 +55,7 @@ async function main() {
 
   // Agent Permissions
   const agentPermissions = insertedPermissions.filter((p) =>
-    ['ticket:read', 'ticket:update'].includes(p.name),
+    ['ticket:read', 'ticket:update', 'message:send'].includes(p.name),
   );
 
   for (const permission of agentPermissions) {
@@ -66,7 +67,7 @@ async function main() {
 
   // Customer Permissions
   const customerPermissions = insertedPermissions.filter((p) =>
-    ['ticket:create', 'ticket:read'].includes(p.name),
+    ['ticket:create', 'ticket:read', 'message:send'].includes(p.name),
   );
 
   for (const permission of customerPermissions) {

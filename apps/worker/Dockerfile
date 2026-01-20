@@ -2,15 +2,16 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package.json ./
-COPY pnpm-lock.yaml ./
-
 RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile || pnpm install
 
-COPY apps/worker ./apps/worker
-COPY packages ./packages
-
+# Copy worker package file and install dependencies
+COPY apps/worker/package.json ./apps/worker/
 WORKDIR /app/apps/worker
+RUN pnpm install
 
-CMD [ "pnpm", "ts-node", "src/consumer.ts" ]
+# Copy source code
+COPY apps/worker/src ./src
+COPY apps/worker/tsconfig.json ./
+COPY packages /app/packages
+
+CMD [ "pnpm", "ts-node", "--transpile-only", "src/consumer.ts" ]

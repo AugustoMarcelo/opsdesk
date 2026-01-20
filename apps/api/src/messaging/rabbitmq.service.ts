@@ -10,6 +10,7 @@ async function sleep(ms: number) {
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection!: amqp.Connection;
   private channel!: amqp.Channel;
+  private isReady = false;
 
   private readonly exchange = 'opsdesk.events';
   private readonly exchangeType = 'topic';
@@ -38,27 +39,46 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
           durable: true,
         });
 
-        console.log('[RabbitMQ] Connected');
+        this.isReady = true;
+        console.log('[RabbitMQ] Connected and ready');
         break;
-      } catch {
-        console.error('[RabbitMQ] Connection failed. Retrying...');
+      } catch (error) {
+        console.error('[RabbitMQ] Connection failed. Retrying...', error);
         await sleep(RETRY_INTERVAL);
       }
     }
   }
 
   publish<T>(routingKey: string, payload: T): void {
-    console.log(JSON.stringify(payload));
-    const buffer = Buffer.from(JSON.stringify(payload));
+    if (!this.isReady || !this.channel) {
+      console.error('[RabbitMQ] Cannot publish: channel not ready', {
+        routingKey,
+        isReady: this.isReady,
+      });
+      return;
+    }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    this.channel.publish(this.exchange, routingKey, buffer, {
-      persistent: true,
-      contentType: 'application/json',
-    });
+    try {
+      console.log(`[RabbitMQ] Publishing event: ${routingKey}`);
+      const buffer = Buffer.from(JSON.stringify(payload));
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      this.channel.publish(this.exchange, routingKey, buffer, {
+        persistent: true,
+        contentType: 'application/json',
+      });
+
+      console.log(`[RabbitMQ] ✅ Event published: ${routingKey}`);
+    } catch (error) {
+      console.error(
+        `[RabbitMQ] ❌ Failed to publish event: ${routingKey}`,
+        error,
+      );
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
+    this.isReady = false;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     if (this.channel) await this.channel.close();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access

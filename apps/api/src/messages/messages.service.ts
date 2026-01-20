@@ -3,11 +3,15 @@ import { messages } from './../db/schema/messages';
 import { db } from './../db/client';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { Injectable } from '@nestjs/common';
+import { RabbitMQService } from '../messaging/rabbitmq.service';
+import { MessageSentEvent } from '../../../../packages/events/message-sent.event';
 
 @Injectable()
 export class MessagesService {
+  constructor(private readonly rabbit: RabbitMQService) {}
+
   async createMessage(input: CreateMessageDto) {
-    return db.transaction(async (tx) => {
+    const message = await db.transaction(async (tx) => {
       const [message] = await tx
         .insert(messages)
         .values({
@@ -30,5 +34,21 @@ export class MessagesService {
 
       return message;
     });
+
+    // Publish message.sent event after transaction commits
+    const messageSentEvent: MessageSentEvent = {
+      event: 'message.sent',
+      payload: {
+        id: message.id,
+        ticketId: message.ticketId,
+        authorId: message.authorId,
+        content: message.content,
+        sentAt: message.createdAt.toISOString(),
+      },
+    };
+
+    this.rabbit.publish<MessageSentEvent>('message.sent', messageSentEvent);
+
+    return message;
   }
 }

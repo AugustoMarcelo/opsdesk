@@ -5,6 +5,8 @@ export const Permissions = {
   TicketUpdate: 'ticket:update',
   TicketClose: 'ticket:close',
 
+  MessageSend: 'message:send',
+
   UserCreate: 'user:create',
   UserRead: 'user:read',
 } as const;

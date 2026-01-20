@@ -451,21 +451,23 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 **US6.1 – Domain Event Publishing**
 
 - [x] On ticket creation: publish `ticket.created`.
-- On status change: publish `ticket.status_changed`.
-- On message sent: publish `message.sent`.
+- [x] On status change: publish `ticket.status_changed`.
+- [x] On message sent: publish `message.sent`.
 
 **US6.2 – Worker Consumer**
 
-- `apps/worker` consuming queues.
-- Initial jobs:
-  - Log “fake” notification.
-  - Update/invalidate cache (next phase).
-  - Optional async audit logging.
-- Configure retries + DLQ.
+- [x] `apps/worker` consuming queues.
+- [x] Initial jobs:
+  - [x] Log "fake" notification.
+  - [x] Update/invalidate cache.
+  - [x] Async audit logging.
+- [x] Configure retries + DLQ.
 
 **US6.3 – Idempotency**
 
-- Ensure reprocessing a message does not duplicate side effects (e.g. store processed IDs or use DB constraints).
+- [x] Ensure reprocessing a message does not duplicate side effects (e.g. store processed IDs or use DB constraints).
+
+**📚 Documentation:** See [EPIC6-MESSAGING-LEARNING-GUIDE.md](docs/EPIC6-MESSAGING-LEARNING-GUIDE.md) for complete implementation details and learning guide.
 
 ---
 
