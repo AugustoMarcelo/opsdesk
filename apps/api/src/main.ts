@@ -1,4 +1,3 @@
-import { RedisIoAdapter } from './realtime/redis-io.adapter';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
@@ -32,8 +31,6 @@ async function bootstrap() {
 
   app.use(requestIdMiddleware);
   app.useLogger(app.get(Logger));
-
-  app.useWebSocketAdapter(new RedisIoAdapter(app));
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }

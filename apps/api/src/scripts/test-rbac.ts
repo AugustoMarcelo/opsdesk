@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import { TicketsService } from '../tickets/tickets.service';
-import { TicketsGateway } from '../tickets/tickets.gateway';
 import { AuthorizationService } from '../auth/authorization.service';
 import { RabbitMQService } from '../messaging/rabbitmq.service';
 import { TicketHistoryRepository } from 'src/tickets/tickets-history.repository';
@@ -15,7 +14,6 @@ const service = new TicketsService(
   new TicketHistoryRepository(),
   new TicketStatusHistoryRepository(),
   new AuditRepository(),
-  new TicketsGateway(),
   new AuthorizationService(),
   new RabbitMQService(),
 );

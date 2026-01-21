@@ -5,7 +5,6 @@ import { Ticket, TicketsRepository } from './tickets.repository';
 import { TicketCreatedEvent } from '../../../../packages/events/ticket-created.event';
 import { TicketStatusChangedEvent } from '../../../../packages/events/ticket-status-changed.event';
 import { TicketUpdatedEvent } from '../../../../packages/events/ticket-updated.event';
-import { TicketsGateway } from './tickets.gateway';
 import { AuthorizationService } from '../auth/authorization.service';
 import {
   ConflictException,
@@ -47,7 +46,6 @@ export class TicketsService {
     private readonly ticketHistoryRepo: TicketHistoryRepository,
     private readonly statusHistoryRepo: TicketStatusHistoryRepository,
     private readonly auditRepo: AuditRepository,
-    private gateway: TicketsGateway,
     private auth: AuthorizationService,
     private readonly rabbit: RabbitMQService,
   ) {}
@@ -109,9 +107,6 @@ export class TicketsService {
       'ticket.created',
       createdTicketEvent,
     );
-
-    // 🔔 Emit event AFTER commit
-    this.gateway.ticketCreated(createdTicketEvent);
 
     // Invalidate cache using pattern
     await this.invalidateTicketsCache();

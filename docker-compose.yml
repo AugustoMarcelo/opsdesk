@@ -32,6 +32,27 @@ services:
     networks:
       - opsdesk
 
+  realtime:
+    build:
+      context: .
+      dockerfile: apps/realtime/Dockerfile
+    container_name: opsdesk-realtime
+    command: pnpm --filter realtime start:dev
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      REALTIME_PORT: 3002
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - opsdesk
+
   postgres:
     image: postgres:16
     container_name: opsdesk-postgres

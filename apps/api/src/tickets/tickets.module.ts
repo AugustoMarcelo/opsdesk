@@ -6,7 +6,6 @@ import { TicketsRepository } from './tickets.repository';
 import { Module } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
 import { TicketsController } from './tickets.controller';
-import { TicketsGateway } from './tickets.gateway';
 import { TicketStatusHistoryRepository } from './tickets-status-history.repository';
 import { TicketHistoryRepository } from './tickets-history.repository';
 
@@ -18,7 +17,6 @@ import { TicketHistoryRepository } from './tickets-history.repository';
     TicketsRepository,
     TicketHistoryRepository,
     TicketStatusHistoryRepository,
-    TicketsGateway,
   ],
   exports: [TicketsService],
 })
