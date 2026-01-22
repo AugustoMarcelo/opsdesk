@@ -135,26 +135,124 @@ Added service:
 
 ## How to test locally
 
-### 1) Start the stack
+### 1) Start the stack (and confirm ports)
 
 ```bash
 docker compose up
 ```
 
-### 2) Get a JWT
+In a second terminal, confirm the services are up and that realtime is listening on **3002**:
+
+```bash
+docker compose ps
+ss -ltnp | grep -E ':3000\\b|:3002\\b' || true
+```
+
+Notes:
+- API runs on `http://localhost:3000`
+- Realtime (Socket.IO) runs on `http://localhost:3002`
+
+### 2) Get a JWT (fresh token)
 
 - Local mode: use `POST /auth/login` on the API to obtain a token
 - Keycloak mode: obtain a Keycloak access token and ensure `OIDC_ISSUER` is configured
 
-### 3) Connect to Socket.IO
+#### Option A — Keycloak mode (recommended for this repo)
 
-Pseudo-client flow:
-1. Connect to `ws://localhost:3002` with `auth.token`
-2. Emit `ticket.join` with the ticket ID
-3. Create a message via REST (`POST /v1/messages`) or change a ticket status via REST
-4. Observe broadcasts:
-   - `message:new`
-   - `ticket:statusChanged`
+Get a **fresh** access token (don’t reuse old ones: expired tokens cause `401 Unauthorized` on REST):
+
+```bash
+curl -s -X POST "http://localhost:8080/realms/opsdesk/protocol/openid-connect/token" \
+  -H "content-type: application/x-www-form-urlencoded" \
+  -d "grant_type=password&client_id=opsdesk-api&username=<USERNAME>&password=<PASSWORD>" \
+  | jq -r .access_token
+```
+
+If Keycloak returns a client error about secrets, add `client_secret=...` (Keycloak UI → Clients → `opsdesk-api` → Credentials).
+
+Quick “is my token expired?” check:
+
+```bash
+TOKEN="<PASTE_TOKEN>"
+node -e "const t=process.env.TOKEN; const p=JSON.parse(Buffer.from(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'),'base64').toString()); console.log({exp:p.exp, now:Math.floor(Date.now()/1000), iss:p.iss});" 
+```
+
+#### Option B — Local mode (JWT_SECRET)
+
+If running with `AUTH_MODE=local`, get a token from the API:
+
+```bash
+curl -s -X POST "http://localhost:3000/auth/login" \
+  -H "content-type: application/json" \
+  -d '{"email":"<EMAIL>","password":"<PASSWORD>"}'
+```
+
+Copy the `accessToken` field.
+
+### 3) Connect to Socket.IO (using the repo’s test script)
+
+The repo includes a ready-to-run Socket.IO client script:
+- `apps/api/src/scripts/ws-test.ts`
+
+Run it from the scripts directory:
+
+```bash
+cd apps/api/src/scripts
+TOKEN="<PASTE_TOKEN>" TICKET_ID="<TICKET_UUID>" npx ts-node ws-test.ts
+```
+
+Expected output:
+- `connected: <socketId>`
+- `sent ticket.join: <ticketId>`
+
+If you get `Connection error: xhr poll error`, it usually means realtime isn’t actually listening on port 3002 (check `docker compose logs realtime`).
+
+If you get `Connection error: Invalid token`, ensure you’re using a **fresh** token (see step 2) and that you’re using the correct auth mode.
+
+### 4) Trigger EPIC4 events via REST and observe WS broadcasts
+
+Keep `ws-test.ts` running (it joins the room `ticket:{id}`), then in another terminal trigger:
+
+#### A) `ticket:statusChanged`
+
+```bash
+TOKEN="<PASTE_TOKEN>"
+TICKET_ID="<TICKET_UUID>"
+
+curl -i -X PATCH "http://localhost:3000/v1/tickets/$TICKET_ID/status" \
+  -H "authorization: Bearer $TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"status":"closed"}'
+```
+
+You should see `ticket:statusChanged` printed by the WS client.
+
+If you get `401`, the token is missing/expired/invalid (most commonly expired).
+
+#### B) `message:new`
+
+```bash
+TOKEN="<PASTE_TOKEN>"
+TICKET_ID="<TICKET_UUID>"
+
+curl -i -X POST "http://localhost:3000/v1/messages" \
+  -H "authorization: Bearer $TOKEN" \
+  -H "content-type: application/json" \
+  -d "{\"ticketId\":\"$TICKET_ID\",\"authorId\":\"00000000-0000-0000-0000-000000000000\",\"content\":\"hello\"}"
+```
+
+You should see `message:new` printed by the WS client.
+
+Note: `CreateMessageDto` currently includes `authorId`; the controller uses `req.user.id`, but the DTO validation may still require this field, so we include a placeholder UUID for testing.
+
+### 5) What just happened (event path)
+
+- REST writes happen in `apps/api`
+- API publishes domain events to RabbitMQ (`opsdesk.events`)
+- `apps/realtime` consumes:
+  - `message.sent` → broadcasts `message:new`
+  - `ticket.status_changed` → broadcasts `ticket:statusChanged`
+- Your Socket.IO client receives those events because it joined `ticket:{id}`
 
 ---
 

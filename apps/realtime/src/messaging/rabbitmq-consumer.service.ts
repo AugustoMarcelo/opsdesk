@@ -4,6 +4,8 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { MessageSentEvent } from '../../../../packages/events/message-sent.event';
 import type { TicketStatusChangedEvent } from '../../../../packages/events/ticket-status-changed.event';
 
+const RETRY_INTERVAL_MS = 3000;
+
 @Injectable()
 export class RabbitMqConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RabbitMqConsumerService.name);
@@ -21,8 +23,7 @@ export class RabbitMqConsumerService implements OnModuleInit, OnModuleDestroy {
       throw new Error('RABBITMQ_URL is not defined');
     }
 
-    this.connection = await amqp.connect(url);
-    this.channel = await this.connection.createChannel();
+    await this.connectWithRetry(url);
 
     await this.channel.assertExchange(this.exchange, 'topic', {
       durable: true,
@@ -67,9 +68,31 @@ export class RabbitMqConsumerService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  private async connectWithRetry(url: string): Promise<void> {
+    // Keep retrying until RabbitMQ is up (mirrors the API/worker behavior).
+    while (true) {
+      try {
+        this.logger.log('[RabbitMQ] Connecting...');
+        this.connection = await amqp.connect(url);
+        this.channel = await this.connection.createChannel();
+        this.logger.log('[RabbitMQ] Connected and channel created');
+        return;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.warn(
+          `[RabbitMQ] Connection failed (will retry in ${RETRY_INTERVAL_MS}ms): ${message}`,
+        );
+        await sleep(RETRY_INTERVAL_MS);
+      }
+    }
+  }
+
   async onModuleDestroy(): Promise<void> {
     if (this.channel) await this.channel.close();
     if (this.connection) await this.connection.close();
   }
 }
 
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
