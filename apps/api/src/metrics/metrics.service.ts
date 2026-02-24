@@ -4,6 +4,7 @@ import { collectDefaultMetrics, Counter, Histogram } from 'prom-client';
 @Injectable()
 export class MetricsService {
   readonly httpRequestTotal: Counter<string>;
+  readonly httpRequestErrorsTotal: Counter<string>;
   readonly httpRequestDuration: Histogram<string>;
 
   constructor() {
@@ -20,6 +21,12 @@ export class MetricsService {
       help: 'Duration of HTTP requests in seconds',
       labelNames: ['method', 'route'],
       buckets: [0.1, 0.3, 0.5, 1, 2, 5],
+    });
+
+    this.httpRequestErrorsTotal = new Counter({
+      name: 'http_request_errors_total',
+      help: 'Total number of failed HTTP requests',
+      labelNames: ['method', 'route', 'status'],
     });
   }
 }

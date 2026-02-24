@@ -10,6 +10,7 @@ import { RealtimeAuthService } from './realtime-auth.service';
 import { TicketsRepository } from './tickets.repository';
 import { Roles } from '../../../../packages/shared/roles';
 import { ForbiddenException } from '@nestjs/common';
+import { MetricsService } from '../metrics/metrics.service';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -21,6 +22,7 @@ export class RealtimeGateway {
   constructor(
     private readonly auth: RealtimeAuthService,
     private readonly ticketsRepo: TicketsRepository,
+    private readonly metrics: MetricsService,
   ) {}
 
   afterInit(server: Server) {
@@ -63,7 +65,16 @@ export class RealtimeGateway {
   }
 
   emitToTicketRoom(event: string, ticketId: string, payload: unknown) {
+    this.metrics.trackEventEmission(event);
     this.server.to(`ticket:${ticketId}`).emit(event, payload);
+  }
+
+  handleConnection() {
+    this.metrics.incrementActiveConnections();
+  }
+
+  handleDisconnect() {
+    this.metrics.decrementActiveConnections();
   }
 }
 

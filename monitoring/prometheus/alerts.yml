@@ -1,0 +1,37 @@
+groups:
+  - name: opsdesk-baseline-alerts
+    rules:
+      - alert: ApiHighErrorRate
+        expr: |
+          (
+            sum(rate(http_request_errors_total[5m]))
+            /
+            clamp_min(sum(rate(http_requests_total[5m])), 0.001)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "API error rate above 5%"
+          description: "API error ratio has been above 5% for 5 minutes."
+
+      - alert: WorkerProcessingFailures
+        expr: increase(worker_failed_total[10m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: worker
+        annotations:
+          summary: "Worker failures detected"
+          description: "Worker has failed at least one message in the last 10 minutes."
+
+      - alert: RealtimeDown
+        expr: up{job="realtime"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: realtime
+        annotations:
+          summary: "Realtime service is down"
+          description: "Prometheus cannot scrape the realtime service target."

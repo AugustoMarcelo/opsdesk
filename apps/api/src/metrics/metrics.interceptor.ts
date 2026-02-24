@@ -5,7 +5,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { MetricsService } from './metrics.service';
 import type { Request, Response } from 'express';
 
@@ -20,7 +20,14 @@ export class MetricsInterceptor implements NestInterceptor {
     const res = http.getResponse<Response>();
 
     const method = req.method;
-    const route = typeof req.url === 'string' ? req.url : 'unknown';
+    const baseUrl = typeof req.baseUrl === 'string' ? req.baseUrl : '';
+    const routePath = (req.route as { path: string })?.path;
+    const route =
+      typeof routePath === 'string'
+        ? `${baseUrl}${routePath}`
+        : typeof req.path === 'string'
+          ? `${baseUrl}${req.path}`
+          : 'unknown';
 
     const endTimer = this.metrics.httpRequestDuration.startTimer({
       method,
@@ -28,12 +35,21 @@ export class MetricsInterceptor implements NestInterceptor {
     });
 
     return next.handle().pipe(
-      tap(() => {
+      finalize(() => {
+        const status = String(res.statusCode);
         this.metrics.httpRequestTotal.inc({
           method,
           route,
-          status: res.statusCode,
+          status,
         });
+
+        if (res.statusCode >= 400) {
+          this.metrics.httpRequestErrorsTotal.inc({
+            method,
+            route,
+            status,
+          });
+        }
 
         endTimer();
       }),
