@@ -1,0 +1,37 @@
+---
+description: Realtime architecture and EPIC 4 conventions
+alwaysApply: true
+---
+
+# Realtime Architecture (EPIC 4)
+
+- Keep WebSockets in `apps/realtime` (never inside `apps/api`).
+- `apps/api` publishes domain events; `apps/realtime` consumes and broadcasts.
+- Do not import internal code across apps; share contracts via `packages/*`.
+
+# Auth & Connectivity
+
+- Authenticate WebSocket in the Socket.IO handshake and attach user to
+  `socket.data.user`.
+- Support `AUTH_MODE=local` (JWT_SECRET) and `AUTH_MODE=keycloak` (JWKS).
+- Do not enforce `issuer` in local dev; Keycloak host differs in containers.
+
+# Realtime Events
+
+- Room naming: `ticket:{id}`.
+- Event names: `message:new` (from `message.sent`), `ticket:statusChanged`
+  (from `ticket.status_changed`).
+- Room access mirrors API ownership rules (`admin`/`agent` any ticket, `customer`
+  only own tickets).
+
+# Messaging Reliability
+
+- RabbitMQ connections must use retry/backoff on startup.
+- Avoid crashing realtime when RabbitMQ is temporarily unavailable.
+
+# Testing Expectations
+
+- Use fresh tokens for REST calls (expired tokens yield 401).
+- Debugging WebSocket issues:
+  - `xhr poll error` -> realtime not on port 3002
+  - `Invalid token` -> token expired or auth mode mismatch

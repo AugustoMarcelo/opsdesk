@@ -4,6 +4,7 @@ import { Logger } from 'nestjs-pino';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { HttpExceptionFilter } from './common/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -17,6 +18,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const config = new DocumentBuilder()
     .setTitle('OpsDesk API')

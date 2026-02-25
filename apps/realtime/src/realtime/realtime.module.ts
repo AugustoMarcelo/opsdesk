@@ -5,9 +5,10 @@ import { TicketsRepository } from './tickets.repository';
 import { UsersRepository } from './users.repository';
 import { UserResolver } from './user-resolver.service';
 import { DatabaseModule } from '../db/database.module';
+import { MetricsModule } from '../metrics/metrics.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, MetricsModule],
   providers: [
     RealtimeGateway,
     RealtimeAuthService,
@@ -18,4 +19,3 @@ import { DatabaseModule } from '../db/database.module';
   exports: [RealtimeGateway],
 })
 export class RealtimeModule {}
-

@@ -516,6 +516,38 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
   - `user_id`
   - `ticket_id`
 
+**US8.4 – Runbook (Dashboards + Alert Tests)**
+
+- Start stack: `docker compose up -d`.
+- Access:
+  - Prometheus: `http://localhost:9090`
+  - Grafana: `http://localhost:3001` (`admin` / `admin`)
+- Provisioned dashboards (folder `OpsDesk`):
+  - `OpsDesk API`
+  - `OpsDesk Worker`
+  - `OpsDesk Realtime`
+
+**Smoke checks**
+
+- Prometheus targets: open `http://localhost:9090/targets` and confirm `api`, `worker`, `realtime` are `UP`.
+- API metrics: open `http://localhost:3000/metrics` and check `http_requests_total` and `http_request_errors_total`.
+- Worker metrics: open `http://localhost:3003/metrics` and check `worker_processed_total`, `worker_failed_total`.
+- Realtime metrics: open `http://localhost:3002/metrics` and check `realtime_active_connections`.
+
+**Controlled alert tests**
+
+- `ApiHighErrorRate`:
+  - Generate 404/401 traffic for ~5 minutes (threshold is 5% over 5m), e.g.:
+    - `while true; do curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/v1/does-not-exist; sleep 0.2; done`
+- `WorkerProcessingFailures`:
+  - Publish an invalid payload in RabbitMQ UI (`http://localhost:15672`, `guest/guest`) to exchange `opsdesk.events` with routing key `ticket.created`.
+  - Invalid JSON causes parse failure, retries, then increments `worker_failed_total`.
+- `RealtimeDown`:
+  - Stop realtime service for at least 2 minutes: `docker compose stop realtime`.
+  - Start again after alert validation: `docker compose start realtime`.
+
+Alert rules are versioned in `monitoring/prometheus/alerts.yml`, and Grafana provisioning is versioned under `monitoring/grafana/provisioning`.
+
 ---
 
 ### EPIC 9 — Nginx (Gateway)

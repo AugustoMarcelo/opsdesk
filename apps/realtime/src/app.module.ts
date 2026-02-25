@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { RealtimeModule } from './realtime/realtime.module';
 import { DatabaseModule } from './db/database.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
-  imports: [DatabaseModule, RealtimeModule, MessagingModule],
+  imports: [DatabaseModule, RealtimeModule, MessagingModule, MetricsModule],
 })
 export class AppModule {}
 

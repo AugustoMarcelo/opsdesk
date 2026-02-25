@@ -27,6 +27,10 @@ services:
     container_name: opsdesk-worker
     env_file:
       - .env
+    environment:
+      WORKER_METRICS_PORT: 3003
+    ports:
+      - "3003:3003"
     depends_on:
       - rabbitmq
     networks:
@@ -89,6 +93,7 @@ services:
     container_name: opsdesk-prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml
     ports:
       - "9090:9090"
     networks:
@@ -101,6 +106,8 @@ services:
       - "3001:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
