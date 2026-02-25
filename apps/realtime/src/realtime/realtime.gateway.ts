@@ -13,6 +13,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { MetricsService } from '../metrics/metrics.service';
 
 @WebSocketGateway({
+  path: '/ws',
   cors: { origin: '*' },
 })
 export class RealtimeGateway {
@@ -77,4 +78,3 @@ export class RealtimeGateway {
     this.metrics.decrementActiveConnections();
   }
 }
-

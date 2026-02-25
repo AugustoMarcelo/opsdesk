@@ -554,12 +554,55 @@ Alert rules are versioned in `monitoring/prometheus/alerts.yml`, and Grafana pro
 
 **US9.1 – Reverse Proxy**
 
-- Nginx in front of:
+- [x] Nginx in front of:
   - `/api` → `apps/api`
   - `/graphql` → `apps/api`
   - `/ws` → `apps/realtime`
-- Correct WebSocket upgrade headers.
-- Basic security headers + gzip.
+- [x] Correct WebSocket upgrade headers.
+- [x] Basic security headers + gzip.
+
+**Learning — Smoke checks (via gateway on port 8888)**
+
+```bash
+# REST API through gateway
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8888/api/health
+# Expected: 200
+
+# Login and list tickets (REST)
+TOKEN=$(curl -s -X POST http://localhost:8888/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@opsdesk.dev","password":"123456"}' | jq -r '.accessToken')
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets | jq .
+# Expected: JSON array of tickets
+
+# Swagger docs
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8888/api/docs
+# Expected: 200
+```
+
+**WebSocket through gateway**
+
+Connect to `http://localhost:8888/ws` with path `/ws` (Socket.IO client):
+
+```javascript
+import { io } from 'socket.io-client';
+const socket = io('http://localhost:8888', { path: '/ws', auth: { token: TOKEN } });
+```
+
+**Expected results**
+
+- `GET /api/health` → 200
+- `GET /api/v1/tickets` with Bearer token → 200 + JSON
+- `GET /api/docs` → 200 (Swagger UI)
+- WebSocket handshake to `/ws` → 101 Switching Protocols
+
+**If this fails**
+
+- **502 Bad Gateway**: API or realtime not ready. Run `docker compose up` and wait for services.
+- **404 on /api/...**: Ensure trailing slash in nginx `location /api/` and `proxy_pass http://api/`.
+- **WebSocket fails (xhr poll error)**: Realtime not on port 3002, or nginx missing `Upgrade`/`Connection` headers.
+- **Invalid token on WS**: Token expired or `AUTH_MODE` mismatch between API and realtime.
+- **401 on /api/v1/tickets**: Ensure `AUTH_MODE=local` (JWT_SECRET set) and `pnpm db:seed` was run. Use `admin@opsdesk.dev` / `123456`.
 
 ---
 
@@ -571,6 +614,9 @@ Alert rules are versioned in `monitoring/prometheus/alerts.yml`, and Grafana pro
 ```bash
 docker compose up
 ```
-- Access API at `http://localhost:<port>/v1`.
-- Access Swagger at `http://localhost:<port>/docs` (or configured path).
-- Access Grafana and other tools via the URLs defined in `docker-compose.yml`.
+- **Via Nginx gateway (port 8888):**
+  - API: `http://localhost:8888/api/v1`
+  - Swagger: `http://localhost:8888/api/docs`
+  - Health: `http://localhost:8888/api/health`
+  - WebSocket: `http://localhost:8888/ws` (Socket.IO path `/ws`)
+- **Direct access** (for development): API `:3000`, Realtime `:3002`, Grafana `:3001`, Prometheus `:9090`.
