@@ -27,6 +27,10 @@ services:
     container_name: opsdesk-worker
     env_file:
       - .env
+    environment:
+      WORKER_METRICS_PORT: 3003
+    ports:
+      - "3003:3003"
     depends_on:
       - rabbitmq
     networks:

@@ -1,0 +1,15 @@
+---
+description: Learning-oriented documentation for feature delivery
+alwaysApply: true
+---
+
+# Learning-Oriented Delivery
+
+- For infra/observability/security features, add a "learning" section in `README.md`
+  (or a docs file linked from README) with practical validation steps.
+- Prefer this structure:
+  - `Smoke checks` (fast "is it up?" verification).
+  - `Controlled tests` (how to trigger expected behavior, alerts, or failures).
+  - `Expected results` (what metrics/logs/status should appear).
+- Include concrete commands/URLs and expected outcomes, not only architecture notes.
+- If troubleshooting is common, add a short "If this fails" checklist with likely causes.
