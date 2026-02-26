@@ -34,6 +34,13 @@ export class UsersController {
     return this.service.listUsers(query);
   }
 
+  @ApiOperation({ summary: 'List roles' })
+  @Get('roles')
+  @Permissions(Perm.UserRead)
+  async listRoles() {
+    return this.service.listRoles();
+  }
+
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Get(':id')

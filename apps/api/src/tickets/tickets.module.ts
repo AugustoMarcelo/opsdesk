@@ -2,6 +2,7 @@ import { DatabaseModule } from './../db/database.module';
 import { RabbitMQModule } from './../messaging/rabbitmq.module';
 import { AuthModule } from './../auth/auth.module';
 import { AuditModule } from './../audit/audit.module';
+import { MessagesModule } from './../messages/messages.module';
 import { TicketsRepository } from './tickets.repository';
 import { Module } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
@@ -10,7 +11,13 @@ import { TicketStatusHistoryRepository } from './tickets-status-history.reposito
 import { TicketHistoryRepository } from './tickets-history.repository';
 
 @Module({
-  imports: [AuthModule, RabbitMQModule, DatabaseModule, AuditModule],
+  imports: [
+    AuthModule,
+    RabbitMQModule,
+    DatabaseModule,
+    AuditModule,
+    MessagesModule,
+  ],
   controllers: [TicketsController],
   providers: [
     TicketsService,

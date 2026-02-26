@@ -1,0 +1,41 @@
+{
+  "realm": "opsdesk",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "Administrator" },
+      { "name": "agent", "description": "Support agent" },
+      { "name": "customer", "description": "Customer" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "opsdesk-api",
+      "name": "OpsDesk API",
+      "enabled": true,
+      "publicClient": false,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "rootUrl": "http://localhost:8888",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:8888/login",
+        "http://localhost:8888/*",
+        "http://localhost:5173/login",
+        "http://localhost:5173/*",
+        "http://127.0.0.1:8888/login",
+        "http://127.0.0.1:8888/*",
+        "http://127.0.0.1:5173/login",
+        "http://127.0.0.1:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8888",
+        "http://localhost:5173",
+        "http://127.0.0.1:8888",
+        "http://127.0.0.1:5173"
+      ]
+    }
+  ]
+}

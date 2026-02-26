@@ -70,7 +70,16 @@ export class RealtimeGateway {
     this.server.to(`ticket:${ticketId}`).emit(event, payload);
   }
 
-  handleConnection() {
+  emitToUser(event: string, userId: string, payload: unknown) {
+    this.metrics.trackEventEmission(event);
+    this.server.to(`user:${userId}`).emit(event, payload);
+  }
+
+  handleConnection(client: Socket) {
+    const user = client.data.user as { id: string } | undefined;
+    if (user?.id) {
+      void client.join(`user:${user.id}`);
+    }
     this.metrics.incrementActiveConnections();
   }
 

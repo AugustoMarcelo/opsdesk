@@ -2,6 +2,7 @@ import { TicketHistoryRepository } from './tickets-history.repository';
 import { AuditRepository } from './../audit/audit.repository';
 import { TicketStatusHistoryRepository } from './tickets-status-history.repository';
 import { Ticket, TicketsRepository } from './tickets.repository';
+import { userNotifications } from '../db/schema/user-notifications';
 import { TicketCreatedEvent } from '../../../../packages/events/ticket-created.event';
 import { TicketStatusChangedEvent } from '../../../../packages/events/ticket-status-changed.event';
 import { TicketUpdatedEvent } from '../../../../packages/events/ticket-updated.event';
@@ -115,9 +116,9 @@ export class TicketsService {
   }
 
   async listTickets(query: ListTicketsDto) {
-    const { offset, limit, order } = query;
+    const { offset, limit, order, status } = query;
 
-    const cacheKey = CacheKeys.ticketsList({ offset, limit, order });
+    const cacheKey = CacheKeys.ticketsList({ offset, limit, order, status });
 
     const cached = await redis.get(cacheKey);
 
@@ -257,6 +258,15 @@ export class TicketsService {
       statusChangedEvent,
     );
 
+    // Create notification for ticket owner if they didn't change the status
+    if (ticket.ownerId !== user.id) {
+      await this.databaseService.db.insert(userNotifications).values({
+        userId: ticket.ownerId,
+        ticketId: id,
+        type: 'status_change',
+      });
+    }
+
     // Invalidate cache
     await this.invalidateTicketsCache();
   }
@@ -311,6 +321,15 @@ export class TicketsService {
       'ticket.status_changed',
       statusChangedEvent,
     );
+
+    // Create notification for ticket owner if they didn't change the status
+    if (ticket.ownerId !== input.userId) {
+      await this.databaseService.db.insert(userNotifications).values({
+        userId: ticket.ownerId,
+        ticketId: input.ticketId,
+        type: 'status_change',
+      });
+    }
 
     // Invalidate cache
     await this.invalidateTicketsCache();

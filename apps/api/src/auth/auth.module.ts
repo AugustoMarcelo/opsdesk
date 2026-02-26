@@ -1,4 +1,5 @@
-import { AuthStrategyProvider } from './auth-strategy.provider';
+import { JwtStrategy } from './jwt.strategy';
+import { KeycloakJwtStrategy } from './keycloak-jwt.strategy';
 import { UserResolver } from './user-resolver.service';
 import { DatabaseModule } from './../db/database.module';
 import { UsersModule } from './../users/users.module';
@@ -25,7 +26,7 @@ import { PermissionsGuard } from './guards/permissions.guard';
   providers: [
     AuthService,
     AuthorizationService,
-    AuthStrategyProvider,
+    process.env.AUTH_MODE === 'keycloak' ? KeycloakJwtStrategy : JwtStrategy,
     UserResolver,
     JwtAuthGuard,
     PermissionsGuard,

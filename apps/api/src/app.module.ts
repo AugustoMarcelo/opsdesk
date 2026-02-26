@@ -9,6 +9,7 @@ import { RabbitMQModule } from './messaging/rabbitmq.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { MessagesModule } from './messages/messages.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MessagesModule } from './messages/messages.module';
     MessagesModule,
     UsersModule,
     AuthModule,
+    NotificationsModule,
   ],
 })
 export class AppModule implements NestModule {

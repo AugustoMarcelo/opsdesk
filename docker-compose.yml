@@ -9,6 +9,28 @@ services:
     depends_on:
       - api
       - realtime
+      - web
+    networks:
+      - opsdesk
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: opsdesk-web
+    volumes:
+      - ./apps/web:/app/apps/web
+      - web_node_modules:/app/apps/web/node_modules
+    command: sh -c "cd /app && pnpm install --filter web... && pnpm --filter web dev --host"
+    env_file:
+      - .env
+    environment:
+      VITE_API_URL: /api
+      VITE_WS_URL: http://localhost:8888
+      VITE_AUTH_MODE: ${AUTH_MODE:-local}
+      VITE_OIDC_ISSUER: http://localhost:8080/realms/opsdesk
+    ports:
+      - "5173:5173"
     networks:
       - opsdesk
 
@@ -20,7 +42,6 @@ services:
     command: pnpm start:dev
     volumes:
       - .:/app
-      - api_dist:/app/apps/api/dist
     env_file:
       - .env
     ports:
@@ -29,6 +50,12 @@ services:
       - postgres
       - redis
       - rabbitmq
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - opsdesk
 
@@ -151,11 +178,13 @@ services:
     image: quay.io/keycloak/keycloak:24.0
     container_name: opsdesk-keycloak
     command: start-dev
+    # command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     volumes:
       - keycloak_data:/opt/keycloak/data
+      # - ./keycloak/opsdesk-realm.json:/opt/keycloak/data/import/opsdesk-realm.json:ro
     ports:
       - "8080:8080"
     networks:
@@ -166,6 +195,7 @@ volumes:
   rabbitmq_data:
   grafana_data:
   keycloak_data:
+  web_node_modules:
 
 networks:
   opsdesk:

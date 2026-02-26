@@ -432,7 +432,7 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets |
 **If this fails**
 
 - **401 on /auth/login**: Run `pnpm db:seed` and use `admin@opsdesk.dev` / `123456`
-- **401 with token**: Token expired (1h TTL) or `AUTH_MODE` mismatch; re-login
+- **401 with token**: Token expired — app will attempt refresh; if refresh fails (e.g. refresh token expired), redirect to login. Also check `AUTH_MODE` mismatch.
 - **EACCES on API dist**: Run `make api-restart` to use Docker volume for build output
 
 ---
@@ -657,8 +657,49 @@ const socket = io('http://localhost:8888', { path: '/ws', auth: { token: TOKEN }
 docker compose up
 ```
 - **Via Nginx gateway (port 8888):**
+  - Web UI: `http://localhost:8888`
   - API: `http://localhost:8888/api/v1`
   - Swagger: `http://localhost:8888/api/docs`
   - Health: `http://localhost:8888/api/health`
   - WebSocket: `http://localhost:8888/ws` (Socket.IO path `/ws`)
-- **Direct access** (for development): API `:3000`, Realtime `:3002`, Grafana `:3001`, Prometheus `:9090`.
+- **Direct access** (for development): Web UI `:5173`, API `:3000`, Realtime `:3002`, Grafana `:3001`, Prometheus `:9090`.
+
+For the Web UI, use `AUTH_MODE=local` and run `pnpm db:seed` to create the admin user (`admin@opsdesk.dev` / `123456`).
+
+**If localhost:8888 shows the default nginx page instead of the web app:** ensure the web container is running (`docker compose ps`) and restart nginx (`docker compose restart nginx`). The web container runs `pnpm install` on first start, so it may take ~15 seconds to be ready.
+
+**Keycloak "Invalid parameter: redirect_uri":** See [docs/KEYCLOAK-WEB-UI-SETUP.md](docs/KEYCLOAK-WEB-UI-SETUP.md) for step-by-step configuration. Quick fix: add `http://localhost:8888/login` to **Valid redirect URIs** (one per line), set **Root URL** to `http://localhost:8888`, and ensure **Client authentication** is OFF.
+
+---
+
+## 8. Learning — Auth Refresh, Notifications, Dark Theme
+
+**Smoke checks**
+
+- **Auth refresh**: Log in, wait for token expiry (or shorten JWT TTL for testing), trigger an API call — the app should silently refresh and retry; if refresh fails, redirect to `/login`.
+- **Prometheus targets**: Open `http://localhost:9090/targets` and confirm `api`, `worker`, `realtime` are `UP`.
+- **Notification badge**: Run `pnpm db:migrate` to create `user_notifications`. The bell icon appears in the sidebar header (next to OpsDesk). With two users, have one send a message or change status on a ticket owned by the other — the owner should see the badge count increment.
+- **Dark theme**: Click the sun/moon icon in the sidebar or login page; reload the page — the chosen theme should persist.
+
+**Controlled tests**
+
+- **Expired token**: Use a short-lived token (e.g. 1m), wait for expiry, then navigate or trigger a request — expect silent refresh or redirect to login.
+- **Prometheus scrape failure**: Stop the API (`docker compose stop api`), check targets for `lastError`; restart API and confirm target returns to `UP`.
+- **Cross-user notification**: User A creates a ticket; User B (agent) sends a message or changes status; User A should see the badge increment and receive a realtime `notification:new` event.
+- **Theme persistence**: Toggle dark mode, close the tab, reopen — theme should match the last selection.
+
+**Expected results**
+
+- 401 on API → one refresh attempt; on refresh failure → redirect to `/login` and clear auth state.
+- Prometheus `api` target `UP` with `metrics_path: /metrics` and healthcheck passing.
+- Unread count from `GET /v1/notifications/unread`; badge updates on `notification:new` WebSocket event.
+- Sidebar: only "New Ticket" active on `/tickets/new`; only "Tickets" active on `/tickets` and `/tickets/:id`.
+- `localStorage` key `opsdesk_theme` stores `light` or `dark`; `dark` class on `<html>` when dark.
+
+**If this fails**
+
+- **No refresh on 401**: Ensure `registerAuthHandler` is called from `AuthProvider` and refresh token is stored; check browser console for refresh errors.
+- **Prometheus API pending**: See "If Prometheus shows API target as pending or DOWN" in EPIC 8 section; verify API healthcheck and `metrics_path`.
+- **Badge not updating**: Run `pnpm db:migrate` to create `user_notifications`. Ensure WebSocket is connected and user room `user:{id}` is joined on connect; check RabbitMQ and realtime logs for `notification:new` emission. Badge only increments when another user (not you) sends a message or changes status on a ticket you own.
+- **Both Tickets and New Ticket active**: Verify `isTicketsActive` / `isNewTicketActive` logic in `Sidebar.tsx`.
+- **Theme not persisting**: Check `opsdesk_theme` in `localStorage`; ensure `@custom-variant dark` is in `index.css`.
