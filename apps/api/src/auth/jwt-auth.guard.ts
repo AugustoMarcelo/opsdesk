@@ -1,56 +1,24 @@
 import { IS_PUBLIC_KEY } from './public.decorator';
-import { JwtService } from '@nestjs/jwt';
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { Request } from 'express';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class JwtAuthGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly reflector: Reflector,
-  ) {}
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(private readonly reflector: Reflector) {
+    super();
+  }
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.get<boolean>(
-      IS_PUBLIC_KEY,
+  canActivate(context: ExecutionContext) {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
-    );
+      context.getClass(),
+    ]);
 
     if (isPublic) {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const authHeader = request.headers['authorization'];
-
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing token');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-
-    try {
-      const payload = await this.jwtService.verifyAsync<{
-        sub: string;
-        email: string;
-        roles: string[];
-        permissions: string[];
-      }>(token);
-      request.user = {
-        id: payload.sub,
-        email: payload.email,
-        roles: payload.roles,
-        permissions: payload.permissions,
-      };
-      return true;
-    } catch {
-      throw new UnauthorizedException('Invalid token');
-    }
+    return super.canActivate(context);
   }
 }

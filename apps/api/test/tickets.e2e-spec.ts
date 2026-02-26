@@ -14,7 +14,6 @@ import { login } from './helpers/auth';
 import { TicketsRepository } from '../src/tickets/tickets.repository';
 import { DatabaseService } from '../src/db/database.service';
 import { getTestModuleOverrides } from './helpers/test-module-overrides';
-import { JwtAuthGuard } from '../src/auth/jwt-auth.guard';
 import { UsersRepository } from '../src/users/users.repository';
 import { cleanupDatabase } from './helpers/cleanup';
 
@@ -68,8 +67,7 @@ describe('Tickets (e2e)', () => {
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
     databaseService = moduleRef.get<DatabaseService>(DatabaseService);
 
-    // Set up global guards (same as main.ts)
-    app.useGlobalGuards(moduleRef.get(JwtAuthGuard));
+    // Global guards (JwtAuthGuard + PermissionsGuard) are applied via APP_GUARD in AuthModule
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,

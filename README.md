@@ -395,6 +395,46 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
   - [x] Admin accesses everything.
 - [x] e2e tests for authorization (correct 403/404 responses).
 
+**Learning — Global auth and public routes**
+
+**Smoke checks**
+
+```bash
+# Public routes (no token)
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8888/api/health
+# Expected: 200
+
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8888/api/metrics
+# Expected: 200
+
+# Protected route without token → 401
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8888/api/v1/tickets
+# Expected: 401
+```
+
+**Controlled tests**
+
+```bash
+# Login and access protected route
+TOKEN=$(curl -s -X POST http://localhost:8888/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@opsdesk.dev","password":"123456"}' | jq -r '.accessToken')
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets | jq .
+# Expected: 200 + JSON
+```
+
+**Expected results**
+
+- `/health`, `/metrics`, `/auth/login` → 200 without token
+- `/v1/*` without token → 401
+- `/v1/*` with valid Bearer token → 200/403 according to permissions
+
+**If this fails**
+
+- **401 on /auth/login**: Run `pnpm db:seed` and use `admin@opsdesk.dev` / `123456`
+- **401 with token**: Token expired (1h TTL) or `AUTH_MODE` mismatch; re-login
+- **EACCES on API dist**: Run `make api-restart` to use Docker volume for build output
+
 ---
 
 ### EPIC 4 — WebSockets (Realtime)
