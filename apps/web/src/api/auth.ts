@@ -2,6 +2,7 @@ import { apiFetch } from './client';
 
 export interface LoginResponse {
   accessToken: string;
+  refreshToken?: string | null;
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -19,4 +20,21 @@ export async function keycloakCallback(
     method: 'POST',
     body: JSON.stringify({ code, redirect_uri: redirectUri }),
   });
+}
+
+export async function refreshToken(refreshToken: string): Promise<LoginResponse> {
+  return apiFetch<LoginResponse>('/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refreshToken }),
+  });
+}
+
+export interface MeResponse {
+  id: string;
+  email: string;
+  roles: string[];
+}
+
+export async function getMe(token: string): Promise<MeResponse> {
+  return apiFetch<MeResponse>('/auth/me', { token });
 }

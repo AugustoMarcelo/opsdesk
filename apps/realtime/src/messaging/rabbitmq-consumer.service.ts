@@ -1,6 +1,12 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import * as amqp from 'amqplib';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { TicketsRepository } from '../realtime/tickets.repository';
 import type { MessageSentEvent } from '../../../../packages/events/message-sent.event';
 import type { TicketStatusChangedEvent } from '../../../../packages/events/ticket-status-changed.event';
 
@@ -15,7 +21,10 @@ export class RabbitMqConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly exchange = 'opsdesk.events';
   private readonly queueName = 'realtime.queue';
 
-  constructor(private readonly gateway: RealtimeGateway) {}
+  constructor(
+    private readonly gateway: RealtimeGateway,
+    private readonly ticketsRepo: TicketsRepository,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     const url = process.env.RABBITMQ_URL;
@@ -33,9 +42,15 @@ export class RabbitMqConsumerService implements OnModuleInit, OnModuleDestroy {
 
     // Bind domain events
     await this.channel.bindQueue(q.queue, this.exchange, 'message.sent');
-    await this.channel.bindQueue(q.queue, this.exchange, 'ticket.status_changed');
+    await this.channel.bindQueue(
+      q.queue,
+      this.exchange,
+      'ticket.status_changed',
+    );
 
-    this.logger.log('📡 Realtime consumer bound to: message.sent, ticket.status_changed');
+    this.logger.log(
+      '📡 Realtime consumer bound to: message.sent, ticket.status_changed',
+    );
 
     this.channel.consume(q.queue, async (msg: amqp.ConsumeMessage | null) => {
       if (!msg) return;
@@ -46,17 +61,33 @@ export class RabbitMqConsumerService implements OnModuleInit, OnModuleDestroy {
           | TicketStatusChangedEvent;
 
         if (parsed.event === 'message.sent') {
-          const ticketId = (parsed as MessageSentEvent).payload.ticketId;
-          this.gateway.emitToTicketRoom('message:new', ticketId, parsed.payload);
+          const ev = parsed;
+          const ticketId = ev.payload.ticketId;
+          this.gateway.emitToTicketRoom('message:new', ticketId, ev.payload);
+          const ticket = await this.ticketsRepo.findById(ticketId);
+          if (ticket && ticket.ownerId !== ev.payload.authorId) {
+            this.gateway.emitToUser('notification:new', ticket.ownerId, {
+              type: 'message',
+              ...ev.payload,
+            });
+          }
         }
 
         if (parsed.event === 'ticket.status_changed') {
-          const ticketId = (parsed as TicketStatusChangedEvent).payload.id;
+          const ev = parsed;
+          const ticketId = ev.payload.id;
           this.gateway.emitToTicketRoom(
             'ticket:statusChanged',
             ticketId,
-            parsed.payload,
+            ev.payload,
           );
+          const ticket = await this.ticketsRepo.findById(ticketId);
+          if (ticket && ticket.ownerId !== ev.payload.changedBy) {
+            this.gateway.emitToUser('notification:new', ticket.ownerId, {
+              type: 'status_change',
+              ...ev.payload,
+            });
+          }
         }
 
         this.channel.ack(msg);

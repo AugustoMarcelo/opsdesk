@@ -3,6 +3,9 @@
 # =========================
 FROM node:22-alpine
 
+# wget for healthcheck
+RUN apk add --no-cache wget
+
 # =========================
 # Enable pnpm
 # =========================

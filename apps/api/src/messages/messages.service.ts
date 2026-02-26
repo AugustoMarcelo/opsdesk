@@ -1,5 +1,7 @@
 import { auditLog } from './../db/schema/audit-log';
 import { messages } from './../db/schema/messages';
+import { tickets } from './../db/schema/tickets';
+import { userNotifications } from './../db/schema/user-notifications';
 import { db } from './../db/client';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { Injectable } from '@nestjs/common';
@@ -62,6 +64,19 @@ export class MessagesService {
     };
 
     this.rabbit.publish<MessageSentEvent>('message.sent', messageSentEvent);
+
+    // Create notification for ticket owner if they didn't send the message
+    const [ticket] = await db
+      .select({ ownerId: tickets.ownerId })
+      .from(tickets)
+      .where(eq(tickets.id, input.ticketId));
+    if (ticket && ticket.ownerId !== input.authorId) {
+      await db.insert(userNotifications).values({
+        userId: ticket.ownerId,
+        ticketId: input.ticketId,
+        type: 'message',
+      });
+    }
 
     return message;
   }

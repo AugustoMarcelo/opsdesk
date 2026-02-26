@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { useTheme } from '../theme/ThemeContext';
 import { ApiError } from '../api/client';
 import { buildAuthUrl } from './keycloak';
 import { keycloakCallback as apiKeycloakCallback } from '../api/auth';
@@ -12,7 +13,8 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [keycloakCallbackLoading, setKeycloakCallbackLoading] = useState(false);
-  const { login, user, isLoading, setToken } = useAuth();
+  const { login, user, isLoading, setTokens } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/';
@@ -37,7 +39,7 @@ export function LoginPage() {
     setKeycloakCallbackLoading(true);
     apiKeycloakCallback(code, redirectUri)
       .then((data) => {
-        setToken(data.accessToken);
+        setTokens(data.accessToken, data.refreshToken ?? null);
         window.history.replaceState({}, '', '/login');
         navigate(from, { replace: true });
       })
@@ -46,7 +48,7 @@ export function LoginPage() {
         window.history.replaceState({}, '', '/login');
       })
       .finally(() => setKeycloakCallbackLoading(false));
-  }, [setToken, navigate, from]);
+  }, [setTokens, navigate, from]);
 
   if (user) {
     navigate(from, { replace: true });
@@ -76,19 +78,37 @@ export function LoginPage() {
 
   if (keycloakCallbackLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-900">
-        <div className="text-slate-400">Completing login...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-900">
+        <div className="text-slate-600 dark:text-slate-400">Completing login...</div>
       </div>
     );
   }
 
+  const isDark = theme === 'dark';
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900">
-      <div className="w-full max-w-sm rounded-lg bg-slate-800 p-8 shadow-xl">
-        <h1 className="mb-6 text-center text-2xl font-bold text-white">OpsDesk</h1>
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-900">
+      <div className="relative w-full max-w-sm rounded-lg bg-white p-8 shadow-xl dark:bg-slate-800">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="absolute right-4 top-4 rounded p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          )}
+        </button>
+        <h1 className="mb-6 text-center text-2xl font-bold text-slate-800 dark:text-white">OpsDesk</h1>
 
         {error && AUTH_MODE === 'keycloak' && (
-          <div className="mb-4 rounded bg-red-900/50 px-3 py-2 text-sm text-red-200">
+          <div className="mb-4 rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-900/50 dark:text-red-200">
             {error}
           </div>
         )}
@@ -103,7 +123,7 @@ export function LoginPage() {
             >
               Login with Keycloak
             </button>
-            <p className="text-center text-sm text-slate-400">
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
               Or use local login (if configured)
             </p>
           </div>
@@ -112,7 +132,7 @@ export function LoginPage() {
         {(AUTH_MODE === 'local' || AUTH_MODE !== 'keycloak') && (
           <form onSubmit={handleLocalLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm text-slate-300">
+              <label htmlFor="email" className="mb-1 block text-sm text-slate-700 dark:text-slate-300">
                 Email
               </label>
               <input
@@ -121,12 +141,12 @@ export function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
                 placeholder="admin@opsdesk.dev"
               />
             </div>
             <div>
-              <label htmlFor="password" className="mb-1 block text-sm text-slate-300">
+              <label htmlFor="password" className="mb-1 block text-sm text-slate-700 dark:text-slate-300">
                 Password
               </label>
               <input
@@ -135,12 +155,12 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
                 placeholder="••••••••"
               />
             </div>
             {error && (
-              <div className="rounded bg-red-900/50 px-3 py-2 text-sm text-red-200">
+              <div className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-900/50 dark:text-red-200">
                 {error}
               </div>
             )}

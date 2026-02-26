@@ -3,13 +3,20 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { login as apiLogin } from '../api/auth';
+import {
+  login as apiLogin,
+  refreshToken as apiRefreshToken,
+  getMe,
+} from '../api/auth';
+import { registerAuthHandler } from '../api/auth-handler';
 
 const AUTH_STORAGE_KEY = 'opsdesk_token';
+const AUTH_REFRESH_KEY = 'opsdesk_refresh_token';
 
 interface JwtPayload {
   sub: string;
@@ -35,6 +42,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   setToken: (token: string) => void;
+  setTokens: (accessToken: string, refreshToken: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -82,11 +90,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() =>
     localStorage.getItem(AUTH_STORAGE_KEY)
   );
+  const [, setRefreshTokenState] = useState<string | null>(() =>
+    localStorage.getItem(AUTH_REFRESH_KEY)
+  );
   const [user, setUser] = useState<AuthUser | null>(() => {
     const t = localStorage.getItem(AUTH_STORAGE_KEY);
     return t ? decodeToken(t) : null;
   });
   const [isLoading, setIsLoading] = useState(false);
+  const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
 
   const setToken = useCallback((t: string) => {
     localStorage.setItem(AUTH_STORAGE_KEY, t);
@@ -95,21 +107,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
   }, []);
 
+  const setTokens = useCallback((accessToken: string, rt: string | null) => {
+    localStorage.setItem(AUTH_STORAGE_KEY, accessToken);
+    setTokenState(accessToken);
+    if (rt) {
+      localStorage.setItem(AUTH_REFRESH_KEY, rt);
+      setRefreshTokenState(rt);
+    } else {
+      localStorage.removeItem(AUTH_REFRESH_KEY);
+      setRefreshTokenState(null);
+    }
+    const u = decodeToken(accessToken);
+    setUser(u);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(AUTH_REFRESH_KEY);
     setTokenState(null);
+    setRefreshTokenState(null);
     setUser(null);
   }, []);
+
+  const logoutAndRedirect = useCallback(() => {
+    logout();
+    window.location.href = '/login';
+  }, [logout]);
+
+  const refreshSession = useCallback(async (): Promise<string | null> => {
+    const rt = localStorage.getItem(AUTH_REFRESH_KEY);
+    if (!rt) return null;
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
+    }
+    const promise = (async () => {
+      try {
+        const res = await apiRefreshToken(rt);
+        setTokens(res.accessToken, res.refreshToken ?? null);
+        return res.accessToken;
+      } catch {
+        refreshPromiseRef.current = null;
+        return null;
+      } finally {
+        refreshPromiseRef.current = null;
+      }
+    })();
+    refreshPromiseRef.current = promise;
+    return promise;
+  }, [setTokens]);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const res = await apiLogin(email, password);
-      setToken(res.accessToken);
+      setTokens(res.accessToken, res.refreshToken ?? null);
     } finally {
       setIsLoading(false);
     }
-  }, [setToken]);
+  }, [setTokens]);
 
   useEffect(() => {
     if (!token) return;
@@ -117,9 +172,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!u) logout();
   }, [token, logout]);
 
+  // Fetch resolved user id from API (fixes Keycloak: JWT sub ≠ DB user id)
+  useEffect(() => {
+    if (!token) return;
+    getMe(token)
+      .then((me) => {
+        setUser((prev) => (prev ? { ...prev, id: me.id } : null));
+      })
+      .catch(() => {
+        // Keep token-decoded user on error
+      });
+  }, [token]);
+
+  useEffect(() => {
+    registerAuthHandler({
+      getToken: () => token,
+      refreshSession,
+      logoutAndRedirect,
+    });
+  }, [token, refreshSession, logoutAndRedirect]);
+
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, logout, setToken }}
+      value={{ user, token, isLoading, login, logout, setToken, setTokens }}
     >
       {children}
     </AuthContext.Provider>

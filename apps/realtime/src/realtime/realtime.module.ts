@@ -16,6 +16,6 @@ import { MetricsModule } from '../metrics/metrics.module';
     UsersRepository,
     UserResolver,
   ],
-  exports: [RealtimeGateway],
+  exports: [RealtimeGateway, TicketsRepository],
 })
 export class RealtimeModule {}

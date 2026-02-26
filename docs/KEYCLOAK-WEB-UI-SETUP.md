@@ -18,6 +18,7 @@ The token exchange uses a **confidential client** (Client authentication ON). Yo
 - **"Invalid parameter: redirect_uri"** → Add the redirect URIs (see below)
 - **"Standard flow is disabled for the client"** → Enable **Standard flow** in Client settings (Capability config)
 - **"Invalid client or Invalid client credentials"** → Enable **Client authentication** and set `KEYCLOAK_CLIENT_SECRET` in `.env`
+- **"Offline tokens not allowed for the user or client"** → See [Offline access (refresh tokens)](#offline-access-refresh-tokens) below
 
 ## Manual configuration (Keycloak Admin)
 
@@ -64,6 +65,18 @@ Create a new client:
 8. Click **Save**
 9. In **Settings**, add the Root URL, Valid redirect URIs, and Web origins as above
 10. In **Credentials**, copy the Client secret → add to `.env` as `KEYCLOAK_CLIENT_SECRET`
+
+## Offline access (refresh tokens)
+
+To use refresh tokens with Keycloak, you must enable offline access. By default, the web app uses `scope=openid` only to avoid this error. To opt in:
+
+1. Add to `.env`: `VITE_KEYCLOAK_OFFLINE_ACCESS=true`
+2. In Keycloak Admin: **Clients** → **opsdesk-api** → **Client scopes**
+3. Click **Add client scope** → choose **offline_access** (or add it from optional client scopes)
+4. Assign the realm role **offline_access** to users who need refresh tokens:
+   - **Realm roles** → **offline_access** → **Assign role** → select users
+
+Without this, Keycloak login works but tokens cannot be refreshed; users must re-login when the access token expires.
 
 ## Fresh import (reset Keycloak)
 
