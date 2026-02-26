@@ -348,6 +348,7 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
 - [x] Endpoints:
   - [x] `POST /v1/tickets` (create)
   - [x] `GET /v1/tickets/:id` (details)
+  - [x] `GET /v1/tickets/:id/history` (timeline: created, status changes, messages)
   - [x] `GET /v1/tickets` (list with pagination/filter/sort)
   - [x] `PATCH /v1/tickets/:id` (edit title/description)
   - [x] `PATCH /v1/tickets/:id/status` (change status)
@@ -369,6 +370,32 @@ Below is a hands-on initial backlog for the OpsDesk POC using Node.js (NestJS), 
   - [x] health
   - [x] create ticket
   - [x] list tickets
+
+**Ticket history timeline**
+
+The Ticket Detail page shows a chronological timeline of events (created, status changes, messages). API: `GET /v1/tickets/:id/history`.
+
+**Smoke checks**
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8888/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@opsdesk.dev","password":"123456"}' | jq -r '.accessToken')
+TICKET_ID=$(curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets | jq -r '.data[0].id')
+curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:8888/api/v1/tickets/$TICKET_ID/history" | jq .
+# Expected: { "data": [ { "type": "created"|"status_change"|"message", "id": "...", "createdAt": "...", "payload": {...} }, ... ] }
+```
+
+**Expected results**
+
+- Timeline events are sorted by `createdAt` ascending.
+- Event types: `created`, `status_change`, `message`.
+- Web UI: Ticket Detail page shows the History section below ticket details.
+
+**If this fails**
+
+- **404**: Ensure the ticket exists and you have `ticket:read` permission.
+- **Empty data**: Create a ticket, add messages, or change status to populate history.
 
 ---
 

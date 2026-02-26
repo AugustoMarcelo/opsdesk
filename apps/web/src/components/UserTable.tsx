@@ -31,9 +31,16 @@ export function UserTable({ users }: UserTableProps) {
         </thead>
         <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
           {users.map((user) => (
-            <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-              <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{user.name}</td>
-              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{user.email}</td>
+            <tr
+              key={user.id}
+              className="hover:bg-slate-50 dark:hover:bg-slate-700/50"
+            >
+              <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
+                {user.name}
+              </td>
+              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                {user.email}
+              </td>
               <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
                 {new Date(user.createdAt).toLocaleDateString()}
               </td>

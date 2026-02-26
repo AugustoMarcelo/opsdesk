@@ -14,14 +14,14 @@ export function CreateTicketPage() {
 
   const canCreate = token && title.length >= 3 && description.length >= 5;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!token || !canCreate) return;
     setError(null);
     setLoading(true);
     try {
       const ticket = await createTicket(token, { title, description });
-      navigate(`/tickets/${ticket.id}`);
+      void navigate(`/tickets/${ticket.id}`);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message || 'Failed to create ticket');
@@ -40,11 +40,14 @@ export function CreateTicketPage() {
       </h1>
 
       <form
-        onSubmit={handleSubmit}
+        onSubmit={(e) => void handleSubmit(e)}
         className="max-w-xl space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800"
       >
         <div>
-          <label htmlFor="title" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label
+            htmlFor="title"
+            className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
             Title
           </label>
           <input
@@ -58,12 +61,17 @@ export function CreateTicketPage() {
             placeholder="Brief description of the issue"
           />
           {title.length > 0 && title.length < 3 && (
-            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">At least 3 characters</p>
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              At least 3 characters
+            </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="description" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label
+            htmlFor="description"
+            className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
             Description
           </label>
           <textarea
@@ -77,7 +85,9 @@ export function CreateTicketPage() {
             placeholder="Detailed description of the problem"
           />
           {description.length > 0 && description.length < 5 && (
-            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">At least 5 characters</p>
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              At least 5 characters
+            </p>
           )}
         </div>
 
@@ -97,7 +107,7 @@ export function CreateTicketPage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/tickets')}
+            onClick={() => void navigate('/tickets')}
             className="rounded-lg border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
             Cancel

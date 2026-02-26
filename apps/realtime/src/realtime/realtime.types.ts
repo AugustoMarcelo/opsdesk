@@ -4,4 +4,3 @@ export type RealtimeUser = {
   roles: string[];
   permissions?: string[];
 };
-

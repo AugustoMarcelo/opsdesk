@@ -20,7 +20,7 @@ export function ChatPanel({ ticketId }: ChatPanelProps) {
   useEffect(() => {
     if (!token) return;
     setLoading(true);
-    listMessagesByTicket(token, ticketId)
+    void listMessagesByTicket(token, ticketId)
       .then((res) => setMessages(res.data ?? []))
       .catch(() => setMessages([]))
       .finally(() => setLoading(false));
@@ -32,7 +32,12 @@ export function ChatPanel({ ticketId }: ChatPanelProps) {
 
   useEffect(() => {
     if (!socket) return;
-    const handler = (payload: { id: string; content: string; authorId: string; sentAt: string }) => {
+    const handler = (payload: {
+      id: string;
+      content: string;
+      authorId: string;
+      sentAt: string;
+    }) => {
       setMessages((prev) => [
         ...prev,
         {
@@ -73,7 +78,9 @@ export function ChatPanel({ ticketId }: ChatPanelProps) {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-        <div className="text-slate-500 dark:text-slate-400">Loading messages...</div>
+        <div className="text-slate-500 dark:text-slate-400">
+          Loading messages...
+        </div>
       </div>
     );
   }
@@ -81,9 +88,13 @@ export function ChatPanel({ ticketId }: ChatPanelProps) {
   return (
     <div className="flex flex-col rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
       <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Chat</span>
+        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Chat
+        </span>
         {connected && (
-          <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400">• Connected</span>
+          <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400">
+            • Connected
+          </span>
         )}
       </div>
       <div className="max-h-80 overflow-y-auto p-4 space-y-3">
@@ -93,7 +104,8 @@ export function ChatPanel({ ticketId }: ChatPanelProps) {
           </div>
         ) : (
           messages.map((msg) => {
-            const authorId = msg.authorId ?? (msg as { author_id?: string }).author_id;
+            const authorId =
+              msg.authorId ?? (msg as { author_id?: string }).author_id;
             const isOwn = authorId === user?.id;
             return (
               <div
@@ -107,8 +119,11 @@ export function ChatPanel({ ticketId }: ChatPanelProps) {
                       : 'bg-slate-200 text-slate-900 dark:bg-slate-600 dark:text-slate-100'
                   }`}
                 >
-                  <div className={`text-xs font-medium ${isOwn ? 'text-emerald-200' : 'text-slate-500 dark:text-slate-400'}`}>
-                    {isOwn ? 'You' : 'Other'} · {new Date(msg.createdAt).toLocaleString()}
+                  <div
+                    className={`text-xs font-medium ${isOwn ? 'text-emerald-200' : 'text-slate-500 dark:text-slate-400'}`}
+                  >
+                    {isOwn ? 'You' : 'Other'} ·{' '}
+                    {new Date(msg.createdAt).toLocaleString()}
                   </div>
                   <div className="mt-1 break-words">{msg.content}</div>
                 </div>
@@ -118,7 +133,10 @@ export function ChatPanel({ ticketId }: ChatPanelProps) {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSend} className="border-t border-slate-200 p-4 dark:border-slate-700">
+      <form
+        onSubmit={(e) => void handleSend(e)}
+        className="border-t border-slate-200 p-4 dark:border-slate-700"
+      >
         <div className="flex gap-2">
           <input
             type="text"

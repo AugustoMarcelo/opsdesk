@@ -28,7 +28,7 @@ export function UsersPage() {
     (offset = 0) => {
       if (!token) return;
       setLoading(true);
-      listUsers(token, { offset, limit: 20, order: 'desc' })
+      void listUsers(token, { offset, limit: 20, order: 'desc' })
         .then((res) => {
           setUsers(res.data ?? []);
           setMeta(res.meta ?? { limit: 20, offset: 0, count: 0 });
@@ -36,7 +36,7 @@ export function UsersPage() {
         .catch(() => setUsers([]))
         .finally(() => setLoading(false));
     },
-    [token]
+    [token],
   );
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export function UsersPage() {
 
   useEffect(() => {
     if (!token || !isAdmin) return;
-    listRoles(token)
+    void listRoles(token)
       .then((res) => setRoles(res.data ?? []))
       .catch(() => setRoles([]));
   }, [token, isAdmin]);
@@ -67,7 +67,7 @@ export function UsersPage() {
       fetchUsers(0);
     } catch (err) {
       setFormError(
-        err instanceof ApiError ? err.message : 'Failed to create user'
+        err instanceof ApiError ? err.message : 'Failed to create user',
       );
     } finally {
       setSubmitting(false);
@@ -85,7 +85,9 @@ export function UsersPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">Users</h1>
+        <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
+          Users
+        </h1>
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
@@ -97,7 +99,7 @@ export function UsersPage() {
 
       {showForm && (
         <form
-          onSubmit={handleCreateUser}
+          onSubmit={(e) => void handleCreateUser(e)}
           className="mb-6 max-w-md space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800"
         >
           <div>
@@ -177,7 +179,9 @@ export function UsersPage() {
       )}
 
       {loading ? (
-        <div className="py-12 text-center text-slate-500 dark:text-slate-400">Loading...</div>
+        <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+          Loading...
+        </div>
       ) : (
         <>
           <UserTable users={users} />

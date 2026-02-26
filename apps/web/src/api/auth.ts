@@ -5,7 +5,10 @@ export interface LoginResponse {
   refreshToken?: string | null;
 }
 
-export async function login(email: string, password: string): Promise<LoginResponse> {
+export async function login(
+  email: string,
+  password: string,
+): Promise<LoginResponse> {
   return apiFetch<LoginResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
@@ -14,7 +17,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
 export async function keycloakCallback(
   code: string,
-  redirectUri: string
+  redirectUri: string,
 ): Promise<LoginResponse> {
   return apiFetch<LoginResponse>('/auth/keycloak-callback', {
     method: 'POST',
@@ -22,7 +25,9 @@ export async function keycloakCallback(
   });
 }
 
-export async function refreshToken(refreshToken: string): Promise<LoginResponse> {
+export async function refreshToken(
+  refreshToken: string,
+): Promise<LoginResponse> {
   return apiFetch<LoginResponse>('/auth/refresh', {
     method: 'POST',
     body: JSON.stringify({ refreshToken }),

@@ -33,7 +33,10 @@ export function TicketList({ tickets }: TicketListProps) {
         </thead>
         <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
           {tickets.map((ticket) => (
-            <tr key={ticket.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <tr
+              key={ticket.id}
+              className="hover:bg-slate-50 dark:hover:bg-slate-700/50"
+            >
               <td className="px-4 py-3">
                 <Link
                   to={`/tickets/${ticket.id}`}

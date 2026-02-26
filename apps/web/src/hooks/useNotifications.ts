@@ -50,7 +50,7 @@ export function useNotifications() {
         // ignore
       }
     },
-    [token, refresh]
+    [token, refresh],
   );
 
   useEffect(() => {

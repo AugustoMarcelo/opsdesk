@@ -11,4 +11,3 @@ export const tickets = pgTable('tickets', {
     .references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
-

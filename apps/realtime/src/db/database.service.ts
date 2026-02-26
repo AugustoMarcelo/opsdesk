@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Injectable } from '@nestjs/common';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -22,4 +21,3 @@ export class DatabaseService {
     this.db = drizzle(pool, { schema, logger: false });
   }
 }
-

@@ -2,7 +2,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit & { token?: string; _skip401Retry?: boolean } = {}
+  options: RequestInit & { token?: string; _skip401Retry?: boolean } = {},
 ): Promise<T> {
   const { token, _skip401Retry, ...init } = options;
   const headers: HeadersInit = {
@@ -10,7 +10,7 @@ export async function apiFetch<T>(
     ...(init.headers as Record<string, string>),
   };
   if (token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
@@ -22,7 +22,7 @@ export async function apiFetch<T>(
       const newToken = await handler.refreshSession();
       if (newToken) {
         const retryHeaders: HeadersInit = {
-          ...(headers as Record<string, string>),
+          ...headers,
           Authorization: `Bearer ${newToken}`,
         };
         const retryRes = await fetch(`${API_BASE}${path}`, {
@@ -30,12 +30,12 @@ export async function apiFetch<T>(
           headers: retryHeaders,
         });
         if (!retryRes.ok) {
-          const err = await retryRes.json().catch(() => ({}));
-          const body = err as { message?: string; detail?: string };
+          const raw: unknown = await retryRes.json().catch(() => ({}));
+          const body = raw as { message?: string; detail?: string };
           const msg = body.detail ?? body.message ?? retryRes.statusText;
           throw new ApiError(
             retryRes.status,
-            typeof msg === 'string' ? msg : retryRes.statusText
+            typeof msg === 'string' ? msg : retryRes.statusText,
           );
         }
         if (retryRes.status === 204) return undefined as T;
@@ -46,10 +46,13 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const body = err as { message?: string; detail?: string };
+    const raw: unknown = await res.json().catch(() => ({}));
+    const body = raw as { message?: string; detail?: string };
     const msg = body.detail ?? body.message ?? res.statusText;
-    throw new ApiError(res.status, typeof msg === 'string' ? msg : res.statusText);
+    throw new ApiError(
+      res.status,
+      typeof msg === 'string' ? msg : res.statusText,
+    );
   }
 
   if (res.status === 204) return undefined as T;
@@ -59,7 +62,7 @@ export async function apiFetch<T>(
 export class ApiError extends Error {
   constructor(
     public status: number,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ApiError';

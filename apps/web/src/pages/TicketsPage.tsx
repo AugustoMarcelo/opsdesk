@@ -19,7 +19,7 @@ export function TicketsPage() {
     (offset = 0) => {
       if (!token) return;
       setLoading(true);
-      listTickets(token, {
+      void listTickets(token, {
         offset,
         limit: 20,
         order,
@@ -34,7 +34,7 @@ export function TicketsPage() {
         })
         .finally(() => setLoading(false));
     },
-    [token, statusFilter, order]
+    [token, statusFilter, order],
   );
 
   useEffect(() => {
@@ -47,7 +47,9 @@ export function TicketsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold text-slate-800 dark:text-slate-100">Tickets</h1>
+      <h1 className="mb-6 text-2xl font-semibold text-slate-800 dark:text-slate-100">
+        Tickets
+      </h1>
 
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <div className="flex rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
@@ -77,7 +79,9 @@ export function TicketsPage() {
       </div>
 
       {loading ? (
-        <div className="py-12 text-center text-slate-500 dark:text-slate-400">Loading...</div>
+        <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+          Loading...
+        </div>
       ) : (
         <>
           <TicketList tickets={tickets} />

@@ -19,4 +19,3 @@ export class TicketsRepository {
     return ticket ?? null;
   }
 }
-

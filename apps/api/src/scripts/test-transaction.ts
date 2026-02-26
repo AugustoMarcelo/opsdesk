@@ -2,12 +2,14 @@ import 'dotenv/config';
 import { TicketsService } from '../tickets/tickets.service';
 import { AuthorizationService } from '../auth/authorization.service';
 import { RabbitMQService } from '../messaging/rabbitmq.service';
+import { MessagesService } from '../messages/messages.service';
 import { TicketStatusHistoryRepository } from 'src/tickets/tickets-status-history.repository';
 import { AuditRepository } from 'src/audit/audit.repository';
 import { DatabaseService } from 'src/db/database.service';
 import { TicketsRepository } from 'src/tickets/tickets.repository';
 import { TicketHistoryRepository } from 'src/tickets/tickets-history.repository';
 
+const rabbit = new RabbitMQService();
 const service = new TicketsService(
   new DatabaseService(),
   new TicketsRepository(),
@@ -15,7 +17,8 @@ const service = new TicketsService(
   new TicketStatusHistoryRepository(),
   new AuditRepository(),
   new AuthorizationService(),
-  new RabbitMQService(),
+  rabbit,
+  new MessagesService(rabbit),
 );
 
 async function run() {

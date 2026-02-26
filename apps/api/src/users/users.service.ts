@@ -38,7 +38,7 @@ export class UsersService {
       return created;
     });
 
-    return user!;
+    return user;
   }
 
   async listRoles() {
