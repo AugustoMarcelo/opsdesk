@@ -441,17 +441,17 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets |
 
 **US4.1 – WebSocket Gateway**
 
-- Create `apps/realtime` (NestJS WebSocket Gateway).
-- Authenticate WebSocket via JWT in handshake.
-- Use rooms by ticket: `ticket:{id}`.
+- [x] Create `apps/realtime` (NestJS WebSocket Gateway).
+- [x] Authenticate WebSocket via JWT in handshake.
+- [x] Use rooms by ticket: `ticket:{id}`.
 
 **US4.2 – Realtime Events**
 
-- Events:
-  - `message:new`
-  - `ticket:statusChanged`
-  - `typing` (optional)
-- Persist messages in PostgreSQL.
+- [x] Events:
+  - [x] `message:new`
+  - [x] `ticket:statusChanged`
+  - [ ] `typing` (optional — not yet implemented)
+- [x] Persist messages in PostgreSQL.
 
 **US4.3 – Basic Scalability**
 
@@ -462,27 +462,29 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets |
 
 ### EPIC 5 — GraphQL (Alternative to REST)
 
+> **Status: Not yet implemented** — planned for a future iteration. There is no `@nestjs/graphql` configuration in `AppModule`, no resolvers, no DataLoader, and no subscriptions.
+
 **US5.1 – GraphQL Server in API**
 
-- Enable `@nestjs/graphql` in `apps/api`.
-- Schema:
-  - Types: `Ticket`, `Message`, `User`, `AuditEvent`
-- Queries:
-  - `ticket(id)`
-  - `tickets(filter, paging, sort)`
-- Mutations:
-  - `createTicket`
-  - `changeTicketStatus`
-  - `sendMessage`
+- [ ] Enable `@nestjs/graphql` in `apps/api`.
+- [ ] Schema:
+  - [ ] Types: `Ticket`, `Message`, `User`, `AuditEvent`
+- [ ] Queries:
+  - [ ] `ticket(id)`
+  - [ ] `tickets(filter, paging, sort)`
+- [ ] Mutations:
+  - [ ] `createTicket`
+  - [ ] `changeTicketStatus`
+  - [ ] `sendMessage`
 
 **US5.2 – Security & Performance**
 
-- Apply RBAC to GraphQL (guards).
-- Prevent N+1 issues with DataLoader (e.g. ticket → user/assignee).
+- [ ] Apply RBAC to GraphQL (guards).
+- [ ] Prevent N+1 issues with DataLoader (e.g. ticket → user/assignee).
 
 **US5.3 – Subscriptions (bonus)**
 
-- `Subscription messageAdded(ticketId)` tied into the realtime/WS layer.
+- [ ] `Subscription messageAdded(ticketId)` tied into the realtime/WS layer.
 
 ---
 
@@ -532,37 +534,37 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets |
 
 **US8.1 – Metrics**
 
-- Use `prom-client` in API and worker.
-- Metrics:
-  - HTTP latency (p95).
-  - Error rate per route.
-  - Jobs processed/failed/retried.
-  - Active WebSocket connections.
+- [x] Use `prom-client` in API and worker.
+- [x] Metrics:
+  - [x] HTTP latency (p95).
+  - [x] Error rate per route.
+  - [x] Jobs processed/failed/retried.
+  - [x] Active WebSocket connections.
 
 **US8.2 – Prometheus + Grafana**
 
-- Add Prometheus + Grafana to `docker-compose`.
-- Dashboards:
-  - “API Overview”
-  - “Worker Overview”
-  - “Realtime Overview”
+- [x] Add Prometheus + Grafana to `docker-compose`.
+- [x] Dashboards:
+  - [x] “API Overview”
+  - [x] “Worker Overview”
+  - [x] “Realtime Overview”
 
 **US8.3 – Logs**
 
-- Loki (optional) + log dashboard.
-- Standard log fields:
-  - `service`
-  - `request_id`
-  - `user_id`
-  - `ticket_id`
+- [ ] Loki (optional) + log dashboard — not yet implemented.
+- [x] Standard log fields:
+  - [x] `service`
+  - [x] `request_id`
+  - [x] `user_id`
+  - [x] `ticket_id`
 
 **US8.4 – Runbook (Dashboards + Alert Tests)**
 
-- Start stack: `docker compose up -d`.
-- Access:
+- [x] Start stack: `docker compose up -d`.
+- [x] Access:
   - Prometheus: `http://localhost:9090`
   - Grafana: `http://localhost:3001` (`admin` / `admin`)
-- Provisioned dashboards (folder `OpsDesk`):
+- [x] Provisioned dashboards (folder `OpsDesk`):
   - `OpsDesk API`
   - `OpsDesk Worker`
   - `OpsDesk Realtime`
