@@ -36,9 +36,9 @@ export class TicketsRepository {
   }
 
   async list(db: DBExecutor, params: ListTicketsDto): Promise<Ticket[]> {
-    const { order, limit, offset } = params;
+    const { order, limit, offset, status } = params;
 
-    const items = await db
+    const baseQuery = db
       .select({
         id: tickets.id,
         title: tickets.title,
@@ -47,12 +47,22 @@ export class TicketsRepository {
         ownerId: tickets.ownerId,
         createdAt: tickets.createdAt,
       })
-      .from(tickets)
-      .orderBy(
-        order === 'asc' ? asc(tickets.createdAt) : desc(tickets.createdAt),
-      )
-      .limit(limit)
-      .offset(offset);
+      .from(tickets);
+
+    const items = status
+      ? await baseQuery
+          .where(eq(tickets.status, status))
+          .orderBy(
+            order === 'asc' ? asc(tickets.createdAt) : desc(tickets.createdAt),
+          )
+          .limit(limit)
+          .offset(offset)
+      : await baseQuery
+          .orderBy(
+            order === 'asc' ? asc(tickets.createdAt) : desc(tickets.createdAt),
+          )
+          .limit(limit)
+          .offset(offset);
 
     return items;
   }

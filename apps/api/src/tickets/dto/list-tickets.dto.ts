@@ -38,4 +38,14 @@ export class ListTicketsDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   order: 'asc' | 'desc' = 'desc';
+
+  @ApiProperty({
+    example: 'open',
+    required: false,
+    enum: ['open', 'closed'],
+    description: 'Filter by ticket status',
+  })
+  @IsOptional()
+  @IsIn(['open', 'closed'])
+  status?: 'open' | 'closed';
 }

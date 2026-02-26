@@ -8,6 +8,6 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     'user:read',
     'message:send',
   ],
-  agent: ['ticket:read', 'ticket:update'],
+  agent: ['ticket:read', 'ticket:update', 'message:send'],
   customer: ['ticket:create', 'ticket:read', 'message:send'],
 };

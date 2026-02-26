@@ -115,9 +115,9 @@ export class TicketsService {
   }
 
   async listTickets(query: ListTicketsDto) {
-    const { offset, limit, order } = query;
+    const { offset, limit, order, status } = query;
 
-    const cacheKey = CacheKeys.ticketsList({ offset, limit, order });
+    const cacheKey = CacheKeys.ticketsList({ offset, limit, order, status });
 
     const cached = await redis.get(cacheKey);
 

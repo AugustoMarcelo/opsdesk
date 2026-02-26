@@ -657,8 +657,15 @@ const socket = io('http://localhost:8888', { path: '/ws', auth: { token: TOKEN }
 docker compose up
 ```
 - **Via Nginx gateway (port 8888):**
+  - Web UI: `http://localhost:8888`
   - API: `http://localhost:8888/api/v1`
   - Swagger: `http://localhost:8888/api/docs`
   - Health: `http://localhost:8888/api/health`
   - WebSocket: `http://localhost:8888/ws` (Socket.IO path `/ws`)
-- **Direct access** (for development): API `:3000`, Realtime `:3002`, Grafana `:3001`, Prometheus `:9090`.
+- **Direct access** (for development): Web UI `:5173`, API `:3000`, Realtime `:3002`, Grafana `:3001`, Prometheus `:9090`.
+
+For the Web UI, use `AUTH_MODE=local` and run `pnpm db:seed` to create the admin user (`admin@opsdesk.dev` / `123456`).
+
+**If localhost:8888 shows the default nginx page instead of the web app:** ensure the web container is running (`docker compose ps`) and restart nginx (`docker compose restart nginx`). The web container runs `pnpm install` on first start, so it may take ~15 seconds to be ready.
+
+**Keycloak "Invalid parameter: redirect_uri":** See [docs/KEYCLOAK-WEB-UI-SETUP.md](docs/KEYCLOAK-WEB-UI-SETUP.md) for step-by-step configuration. Quick fix: add `http://localhost:8888/login` to **Valid redirect URIs** (one per line), set **Root URL** to `http://localhost:8888`, and ensure **Client authentication** is OFF.

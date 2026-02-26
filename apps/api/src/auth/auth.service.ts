@@ -8,6 +8,11 @@ import { JwtService } from '@nestjs/jwt';
 import { userRoles, roles } from '../db/schema';
 import { compare } from 'bcrypt';
 
+const OIDC_ISSUER =
+  process.env.OIDC_ISSUER || 'http://keycloak:8080/realms/opsdesk';
+const CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID || 'opsdesk-api';
+const CLIENT_SECRET = process.env.KEYCLOAK_CLIENT_SECRET || '';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -62,5 +67,47 @@ export class AuthService {
         permissions: currentUserPermissions.map((p) => p.permissionName),
       }),
     };
+  }
+
+  async keycloakCallback(code: string, redirectUri: string) {
+    if (!CLIENT_SECRET) {
+      throw new UnauthorizedException(
+        'KEYCLOAK_CLIENT_SECRET is not configured. Set it in .env for Keycloak OAuth.',
+      );
+    }
+
+    const tokenUrl = `${OIDC_ISSUER}/protocol/openid-connect/token`;
+    const body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      code,
+      redirect_uri: redirectUri,
+    });
+
+    const res = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      let message = 'Keycloak token exchange failed';
+      try {
+        const parsed = JSON.parse(errText) as {
+          error?: string;
+          error_description?: string;
+        };
+        message =
+          (parsed.error_description ?? parsed.error ?? errText) || message;
+      } catch {
+        message = errText || message;
+      }
+      throw new UnauthorizedException(message);
+    }
+
+    const data = (await res.json()) as { access_token: string };
+    return { accessToken: data.access_token };
   }
 }

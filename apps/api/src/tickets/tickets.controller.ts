@@ -13,6 +13,7 @@ import {
   Patch,
 } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
+import { MessagesService } from '../messages/messages.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { ListTicketsDto } from './dto/list-tickets.dto';
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
@@ -22,7 +23,10 @@ import { UpdateTicketDto } from './dto/update-ticket.dto';
 @ApiTags('Tickets')
 @Controller('/v1/tickets')
 export class TicketsController {
-  constructor(private readonly service: TicketsService) {}
+  constructor(
+    private readonly service: TicketsService,
+    private readonly messagesService: MessagesService,
+  ) {}
 
   @ApiOperation({ summary: 'Create ticket' })
   @ApiResponse({ status: 201, description: 'Ticket created' })
@@ -45,6 +49,18 @@ export class TicketsController {
     const tickets = await this.service.listTickets(query);
 
     return tickets;
+  }
+
+  @ApiOperation({ summary: 'List messages for a ticket' })
+  @ApiResponse({ status: 404, description: 'Ticket not found' })
+  @Get(':id/messages')
+  @Permissions(Perm.TicketRead)
+  async getMessages(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    await this.service.getTicketById(id, req.user);
+    return this.messagesService.listByTicketId(id);
   }
 
   @ApiOperation({ summary: 'Get ticket by ID' })
