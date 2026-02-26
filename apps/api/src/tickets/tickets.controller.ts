@@ -10,7 +10,6 @@ import {
   Query,
   Req,
   Param,
-  UseGuards,
   Patch,
 } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
@@ -19,12 +18,9 @@ import { ListTicketsDto } from './dto/list-tickets.dto';
 import type { AuthenticatedRequest } from '../auth/authenticated-request';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Tickets')
 @Controller('/v1/tickets')
-@UseGuards(AuthGuard('jwt'), PermissionsGuard)
 export class TicketsController {
   constructor(private readonly service: TicketsService) {}
 

@@ -20,6 +20,7 @@ services:
     command: pnpm start:dev
     volumes:
       - .:/app
+      - api_dist:/app/apps/api/dist
     env_file:
       - .env
     ports:
