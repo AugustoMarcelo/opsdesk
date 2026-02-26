@@ -2,14 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useSocket } from '../hooks/useSocket';
-import {
-  getTicket,
-  updateTicket,
-  updateTicketStatus,
-} from '../api/tickets';
+import { getTicket, updateTicket, updateTicketStatus } from '../api/tickets';
 import type { Ticket } from '../api/tickets';
 import { TicketStatusBadge } from '../components/TicketStatusBadge';
 import { ChatPanel } from '../components/ChatPanel';
+import { TicketHistoryTimeline } from '../components/TicketHistoryTimeline';
 import { ApiError } from '../api/client';
 
 export function TicketDetailPage() {
@@ -30,14 +27,16 @@ export function TicketDetailPage() {
   useEffect(() => {
     if (!token || !id) return;
     setLoading(true);
-    getTicket(token, id)
+    void getTicket(token, id)
       .then((res) => {
         setTicket(res.data);
         setEditTitle(res.data.title);
         setEditDescription(res.data.description);
       })
       .catch((err) => {
-        setError(err instanceof ApiError ? err.message : 'Failed to load ticket');
+        setError(
+          err instanceof ApiError ? err.message : 'Failed to load ticket',
+        );
       })
       .finally(() => setLoading(false));
   }, [token, id]);
@@ -49,7 +48,9 @@ export function TicketDetailPage() {
   useEffect(() => {
     if (!socket || !id) return;
     const handler = (payload: { newStatus: string }) => {
-      setTicket((prev) => (prev ? { ...prev, status: payload.newStatus } : null));
+      setTicket((prev) =>
+        prev ? { ...prev, status: payload.newStatus } : null,
+      );
     };
     socket.on('ticket:statusChanged', handler);
     return () => {
@@ -63,7 +64,9 @@ export function TicketDetailPage() {
       await updateTicketStatus(token, id, status);
       setTicket((prev) => (prev ? { ...prev, status } : null));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to update status');
+      setError(
+        err instanceof ApiError ? err.message : 'Failed to update status',
+      );
     }
   };
 
@@ -75,7 +78,9 @@ export function TicketDetailPage() {
         description: editDescription,
       });
       setTicket((prev) =>
-        prev ? { ...prev, title: editTitle, description: editDescription } : null
+        prev
+          ? { ...prev, title: editTitle, description: editDescription }
+          : null,
       );
       setEditing(false);
     } catch (err) {
@@ -97,7 +102,7 @@ export function TicketDetailPage() {
         {error}
         <button
           type="button"
-          onClick={() => navigate('/tickets')}
+          onClick={() => void navigate('/tickets')}
           className="ml-4 text-sm underline"
         >
           Back to tickets
@@ -113,10 +118,12 @@ export function TicketDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">Ticket Details</h1>
+        <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
+          Ticket Details
+        </h1>
         <button
           type="button"
-          onClick={() => navigate('/tickets')}
+          onClick={() => void navigate('/tickets')}
           className="text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
         >
           ← Back to tickets
@@ -129,7 +136,7 @@ export function TicketDetailPage() {
           {canClose && ticket.status === 'open' && (
             <button
               type="button"
-              onClick={() => handleStatusChange('closed')}
+              onClick={() => void handleStatusChange('closed')}
               className="rounded bg-slate-200 px-2 py-1 text-sm hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-500"
             >
               Close ticket
@@ -138,7 +145,7 @@ export function TicketDetailPage() {
           {canClose && ticket.status === 'closed' && (
             <button
               type="button"
-              onClick={() => handleStatusChange('open')}
+              onClick={() => void handleStatusChange('open')}
               className="rounded bg-slate-200 px-2 py-1 text-sm hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-500"
             >
               Reopen
@@ -149,7 +156,9 @@ export function TicketDetailPage() {
         {editing ? (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-slate-600 dark:text-slate-400">Title</label>
+              <label className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
+                Title
+              </label>
               <input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -170,7 +179,7 @@ export function TicketDetailPage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={handleSaveEdit}
+                onClick={() => void handleSaveEdit()}
                 className="rounded bg-amber-600 px-4 py-2 text-white hover:bg-amber-700"
               >
                 Save
@@ -190,8 +199,12 @@ export function TicketDetailPage() {
           </div>
         ) : (
           <>
-            <h2 className="text-lg font-medium text-slate-800 dark:text-slate-100">{ticket.title}</h2>
-            <p className="mt-2 text-slate-600 dark:text-slate-300">{ticket.description}</p>
+            <h2 className="text-lg font-medium text-slate-800 dark:text-slate-100">
+              {ticket.title}
+            </h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-300">
+              {ticket.description}
+            </p>
             <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
               Created {new Date(ticket.createdAt).toLocaleString()}
             </p>
@@ -207,6 +220,8 @@ export function TicketDetailPage() {
           </>
         )}
       </div>
+
+      <TicketHistoryTimeline ticketId={ticket.id} />
 
       <ChatPanel ticketId={ticket.id} />
     </div>

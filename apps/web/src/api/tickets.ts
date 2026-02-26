@@ -18,6 +18,28 @@ export interface TicketDetailResponse {
   data: Ticket;
 }
 
+export type TicketHistoryEventType = 'created' | 'status_change' | 'message';
+
+export interface TicketHistoryEvent {
+  type: TicketHistoryEventType;
+  id: string;
+  createdAt: string;
+  payload: Record<string, unknown>;
+}
+
+export interface TicketHistoryResponse {
+  data: TicketHistoryEvent[];
+}
+
+export async function getTicketHistory(
+  token: string,
+  ticketId: string,
+): Promise<TicketHistoryResponse> {
+  return apiFetch<TicketHistoryResponse>(`/v1/tickets/${ticketId}/history`, {
+    token,
+  });
+}
+
 export async function listTickets(
   token: string,
   params?: {
@@ -25,7 +47,7 @@ export async function listTickets(
     limit?: number;
     order?: 'asc' | 'desc';
     status?: 'open' | 'closed';
-  }
+  },
 ): Promise<TicketsListResponse> {
   const search = new URLSearchParams();
   if (params?.offset != null) search.set('offset', String(params.offset));
@@ -33,16 +55,21 @@ export async function listTickets(
   if (params?.order) search.set('order', params.order);
   if (params?.status) search.set('status', params.status);
   const qs = search.toString();
-  return apiFetch<TicketsListResponse>(`/v1/tickets${qs ? `?${qs}` : ''}`, { token });
+  return apiFetch<TicketsListResponse>(`/v1/tickets${qs ? `?${qs}` : ''}`, {
+    token,
+  });
 }
 
-export async function getTicket(token: string, id: string): Promise<TicketDetailResponse> {
+export async function getTicket(
+  token: string,
+  id: string,
+): Promise<TicketDetailResponse> {
   return apiFetch<TicketDetailResponse>(`/v1/tickets/${id}`, { token });
 }
 
 export async function createTicket(
   token: string,
-  data: { title: string; description: string }
+  data: { title: string; description: string },
 ): Promise<Ticket> {
   return apiFetch<Ticket>('/v1/tickets', {
     method: 'POST',
@@ -54,7 +81,7 @@ export async function createTicket(
 export async function updateTicket(
   token: string,
   id: string,
-  data: { title?: string; description?: string }
+  data: { title?: string; description?: string },
 ): Promise<void> {
   await apiFetch(`/v1/tickets/${id}`, {
     method: 'PATCH',
@@ -66,7 +93,7 @@ export async function updateTicket(
 export async function updateTicketStatus(
   token: string,
   id: string,
-  status: 'open' | 'closed'
+  status: 'open' | 'closed',
 ): Promise<void> {
   await apiFetch(`/v1/tickets/${id}/status`, {
     method: 'PATCH',

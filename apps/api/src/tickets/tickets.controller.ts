@@ -63,6 +63,17 @@ export class TicketsController {
     return this.messagesService.listByTicketId(id);
   }
 
+  @ApiOperation({ summary: 'Get ticket history timeline' })
+  @ApiResponse({ status: 404, description: 'Ticket not found' })
+  @Get(':id/history')
+  @Permissions(Perm.TicketRead)
+  async getHistory(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.getTicketHistory(id, req.user);
+  }
+
   @ApiOperation({ summary: 'Get ticket by ID' })
   @ApiResponse({ status: 404, description: 'Ticket not found' })
   @Get(':id')

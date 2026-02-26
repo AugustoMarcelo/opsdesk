@@ -15,23 +15,23 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<DashboardPage />} />
-          <Route path="tickets" element={<TicketsPage />} />
-          <Route path="tickets/new" element={<CreateTicketPage />} />
-          <Route path="tickets/:id" element={<TicketDetailPage />} />
-          <Route path="users" element={<UsersPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<DashboardPage />} />
+            <Route path="tickets" element={<TicketsPage />} />
+            <Route path="tickets/new" element={<CreateTicketPage />} />
+            <Route path="tickets/:id" element={<TicketDetailPage />} />
+            <Route path="users" element={<UsersPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </AuthProvider>
     </ThemeProvider>
   );

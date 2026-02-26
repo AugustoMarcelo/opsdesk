@@ -17,7 +17,8 @@ export function LoginPage() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/';
+  const from =
+    (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/';
 
   useEffect(() => {
     if (AUTH_MODE !== 'keycloak') return;
@@ -37,21 +38,23 @@ export function LoginPage() {
     const redirectUri = window.location.origin + '/login';
 
     setKeycloakCallbackLoading(true);
-    apiKeycloakCallback(code, redirectUri)
+    void apiKeycloakCallback(code, redirectUri)
       .then((data) => {
         setTokens(data.accessToken, data.refreshToken ?? null);
         window.history.replaceState({}, '', '/login');
-        navigate(from, { replace: true });
+        void navigate(from, { replace: true });
       })
-      .catch((err) => {
-        setError(err.message || 'Failed to complete login');
+      .catch((err: unknown) => {
+        const msg =
+          err instanceof Error ? err.message : 'Failed to complete login';
+        setError(msg);
         window.history.replaceState({}, '', '/login');
       })
       .finally(() => setKeycloakCallbackLoading(false));
   }, [setTokens, navigate, from]);
 
   if (user) {
-    navigate(from, { replace: true });
+    void navigate(from, { replace: true });
     return null;
   }
 
@@ -60,7 +63,7 @@ export function LoginPage() {
     setError(null);
     try {
       await login(email, password);
-      navigate(from, { replace: true });
+      void navigate(from, { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message || 'Login failed');
@@ -79,7 +82,9 @@ export function LoginPage() {
   if (keycloakCallbackLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-900">
-        <div className="text-slate-600 dark:text-slate-400">Completing login...</div>
+        <div className="text-slate-600 dark:text-slate-400">
+          Completing login...
+        </div>
       </div>
     );
   }
@@ -96,16 +101,40 @@ export function LoginPage() {
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {isDark ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
             </svg>
           )}
         </button>
-        <h1 className="mb-6 text-center text-2xl font-bold text-slate-800 dark:text-white">OpsDesk</h1>
+        <h1 className="mb-6 text-center text-2xl font-bold text-slate-800 dark:text-white">
+          OpsDesk
+        </h1>
 
         {error && AUTH_MODE === 'keycloak' && (
           <div className="mb-4 rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-900/50 dark:text-red-200">
@@ -130,9 +159,15 @@ export function LoginPage() {
         ) : null}
 
         {(AUTH_MODE === 'local' || AUTH_MODE !== 'keycloak') && (
-          <form onSubmit={handleLocalLogin} className="space-y-4">
+          <form
+            onSubmit={(e) => void handleLocalLogin(e)}
+            className="space-y-4"
+          >
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm text-slate-700 dark:text-slate-300">
+              <label
+                htmlFor="email"
+                className="mb-1 block text-sm text-slate-700 dark:text-slate-300"
+              >
                 Email
               </label>
               <input
@@ -146,7 +181,10 @@ export function LoginPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="mb-1 block text-sm text-slate-700 dark:text-slate-300">
+              <label
+                htmlFor="password"
+                className="mb-1 block text-sm text-slate-700 dark:text-slate-300"
+              >
                 Password
               </label>
               <input

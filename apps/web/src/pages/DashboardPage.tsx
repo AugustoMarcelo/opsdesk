@@ -12,7 +12,7 @@ export function DashboardPage() {
   useEffect(() => {
     if (!token) return;
 
-    listTickets(token, { limit: 100, order: 'desc' })
+    void listTickets(token, { limit: 100, order: 'desc' })
       .then((res) => setTickets(res.data ?? []))
       .catch(() => setTickets([]))
       .finally(() => setLoading(false));
@@ -32,19 +32,31 @@ export function DashboardPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold text-slate-800 dark:text-slate-100">Dashboard</h1>
+      <h1 className="mb-6 text-2xl font-semibold text-slate-800 dark:text-slate-100">
+        Dashboard
+      </h1>
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <div className="text-sm text-slate-500 dark:text-slate-400">Total Tickets</div>
-          <div className="mt-1 text-3xl font-bold text-slate-800 dark:text-slate-100">{total}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            Total Tickets
+          </div>
+          <div className="mt-1 text-3xl font-bold text-slate-800 dark:text-slate-100">
+            {total}
+          </div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <div className="text-sm text-slate-500 dark:text-slate-400">Open</div>
-          <div className="mt-1 text-3xl font-bold text-emerald-600 dark:text-emerald-400">{open}</div>
+          <div className="mt-1 text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+            {open}
+          </div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <div className="text-sm text-slate-500 dark:text-slate-400">Closed</div>
-          <div className="mt-1 text-3xl font-bold text-slate-600 dark:text-slate-300">{closed}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            Closed
+          </div>
+          <div className="mt-1 text-3xl font-bold text-slate-600 dark:text-slate-300">
+            {closed}
+          </div>
         </div>
       </div>
       <div className="mt-8 flex gap-4">

@@ -8,4 +8,3 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
-

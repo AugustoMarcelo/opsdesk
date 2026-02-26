@@ -8,4 +8,3 @@ import { MetricsModule } from './metrics/metrics.module';
   imports: [DatabaseModule, RealtimeModule, MessagingModule, MetricsModule],
 })
 export class AppModule {}
-

@@ -16,12 +16,14 @@ export interface UnreadCountResponse {
 }
 
 export async function listUnreadNotifications(
-  token: string
+  token: string,
 ): Promise<NotificationsListResponse> {
   return apiFetch<NotificationsListResponse>('/v1/notifications', { token });
 }
 
-export async function getUnreadCount(token: string): Promise<UnreadCountResponse> {
+export async function getUnreadCount(
+  token: string,
+): Promise<UnreadCountResponse> {
   return apiFetch<UnreadCountResponse>('/v1/notifications/unread', { token });
 }
 
@@ -34,7 +36,7 @@ export async function markAllNotificationsRead(token: string): Promise<void> {
 
 export async function markNotificationRead(
   token: string,
-  notificationId: string
+  notificationId: string,
 ): Promise<void> {
   await apiFetch(`/v1/notifications/${notificationId}/read`, {
     method: 'POST',

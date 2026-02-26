@@ -15,14 +15,16 @@ export interface MessagesListResponse {
 
 export async function listMessagesByTicket(
   token: string,
-  ticketId: string
+  ticketId: string,
 ): Promise<MessagesListResponse> {
-  return apiFetch<MessagesListResponse>(`/v1/tickets/${ticketId}/messages`, { token });
+  return apiFetch<MessagesListResponse>(`/v1/tickets/${ticketId}/messages`, {
+    token,
+  });
 }
 
 export async function sendMessage(
   token: string,
-  data: { ticketId: string; authorId: string; content: string }
+  data: { ticketId: string; authorId: string; content: string },
 ): Promise<Message> {
   return apiFetch<Message>('/v1/messages', {
     method: 'POST',

@@ -31,7 +31,7 @@ export function useSocket(token: string | null) {
     (ticketId: string) => {
       socket?.emit('ticket.join', ticketId);
     },
-    [socket]
+    [socket],
   );
 
   return { socket, connected, joinTicket };

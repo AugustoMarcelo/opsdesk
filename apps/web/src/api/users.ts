@@ -20,14 +20,16 @@ export interface UsersListResponse {
 
 export async function listUsers(
   token: string,
-  params?: { offset?: number; limit?: number; order?: 'asc' | 'desc' }
+  params?: { offset?: number; limit?: number; order?: 'asc' | 'desc' },
 ): Promise<UsersListResponse> {
   const search = new URLSearchParams();
   if (params?.offset != null) search.set('offset', String(params.offset));
   if (params?.limit != null) search.set('limit', String(params.limit));
   if (params?.order) search.set('order', params.order);
   const qs = search.toString();
-  return apiFetch<UsersListResponse>(`/v1/users${qs ? `?${qs}` : ''}`, { token });
+  return apiFetch<UsersListResponse>(`/v1/users${qs ? `?${qs}` : ''}`, {
+    token,
+  });
 }
 
 export async function listRoles(token: string): Promise<{ data: Role[] }> {
@@ -36,7 +38,7 @@ export async function listRoles(token: string): Promise<{ data: Role[] }> {
 
 export async function createUser(
   token: string,
-  data: { email: string; name: string; password: string; roleId?: string }
+  data: { email: string; name: string; password: string; roleId?: string },
 ): Promise<User> {
   return apiFetch<User>('/v1/users', {
     method: 'POST',

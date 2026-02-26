@@ -6,7 +6,12 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/*.d.ts'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/*.d.ts',
+      'apps/web/vite.config.ts',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -23,9 +28,19 @@ export default tseslint.config(
           'apps/api/tsconfig.json',
           'apps/realtime/tsconfig.json',
           'apps/worker/tsconfig.json',
+          'apps/web/tsconfig.json',
         ],
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+  },
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+      sourceType: 'module',
     },
   },
   {

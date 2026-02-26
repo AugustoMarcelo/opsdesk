@@ -7,4 +7,3 @@ import { RealtimeModule } from '../realtime/realtime.module';
   providers: [RabbitMqConsumerService],
 })
 export class MessagingModule {}
-

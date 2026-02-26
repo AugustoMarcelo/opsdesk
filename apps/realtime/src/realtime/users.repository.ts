@@ -36,4 +36,3 @@ export class UsersRepository {
     return user;
   }
 }
-

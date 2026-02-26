@@ -68,11 +68,9 @@ function decodeToken(token: string): AuthUser | null {
     const exp = payload.exp ? payload.exp * 1000 : 0;
     if (exp && Date.now() >= exp) return null;
 
-    const roles =
-      payload.roles ??
-      payload.realm_access?.roles ??
-      [];
-    const permissions = payload.permissions ?? roles.flatMap((r) => ROLE_PERMISSIONS[r] ?? []);
+    const roles = payload.roles ?? payload.realm_access?.roles ?? [];
+    const permissions =
+      payload.permissions ?? roles.flatMap((r) => ROLE_PERMISSIONS[r] ?? []);
     const email = payload.email ?? payload.preferred_username ?? '';
 
     return {
@@ -88,10 +86,10 @@ function decodeToken(token: string): AuthUser | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() =>
-    localStorage.getItem(AUTH_STORAGE_KEY)
+    localStorage.getItem(AUTH_STORAGE_KEY),
   );
   const [, setRefreshTokenState] = useState<string | null>(() =>
-    localStorage.getItem(AUTH_REFRESH_KEY)
+    localStorage.getItem(AUTH_REFRESH_KEY),
   );
   const [user, setUser] = useState<AuthUser | null>(() => {
     const t = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -156,15 +154,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return promise;
   }, [setTokens]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const res = await apiLogin(email, password);
-      setTokens(res.accessToken, res.refreshToken ?? null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setTokens]);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      setIsLoading(true);
+      try {
+        const res = await apiLogin(email, password);
+        setTokens(res.accessToken, res.refreshToken ?? null);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [setTokens],
+  );
 
   useEffect(() => {
     if (!token) return;
@@ -175,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch resolved user id from API (fixes Keycloak: JWT sub ≠ DB user id)
   useEffect(() => {
     if (!token) return;
-    getMe(token)
+    void getMe(token)
       .then((me) => {
         setUser((prev) => (prev ? { ...prev, id: me.id } : null));
       })

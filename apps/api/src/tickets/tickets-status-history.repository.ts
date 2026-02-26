@@ -1,6 +1,7 @@
 import { ticketStatusHistory } from './../db/schema/ticket-status-history';
 import { DBExecutor } from './../db/db-executor.type';
 import { Injectable } from '@nestjs/common';
+import { asc, eq } from 'drizzle-orm';
 
 export interface TicketStatusHistoryData {
   ticketId: string;
@@ -18,5 +19,13 @@ export class TicketStatusHistoryRepository {
       newStatus: data.newStatus,
       changedBy: data.changedBy,
     });
+  }
+
+  async findByTicketId(db: DBExecutor, ticketId: string) {
+    return db
+      .select()
+      .from(ticketStatusHistory)
+      .where(eq(ticketStatusHistory.ticketId, ticketId))
+      .orderBy(asc(ticketStatusHistory.createdBy));
   }
 }

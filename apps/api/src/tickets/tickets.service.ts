@@ -1,6 +1,7 @@
 import { TicketHistoryRepository } from './tickets-history.repository';
 import { AuditRepository } from './../audit/audit.repository';
 import { TicketStatusHistoryRepository } from './tickets-status-history.repository';
+import { MessagesService } from '../messages/messages.service';
 import { Ticket, TicketsRepository } from './tickets.repository';
 import { userNotifications } from '../db/schema/user-notifications';
 import { TicketCreatedEvent } from '../../../../packages/events/ticket-created.event';
@@ -49,6 +50,7 @@ export class TicketsService {
     private readonly auditRepo: AuditRepository,
     private auth: AuthorizationService,
     private readonly rabbit: RabbitMQService,
+    private readonly messagesService: MessagesService,
   ) {}
 
   async createTicket(input: CreateTicketInput) {
@@ -150,6 +152,79 @@ export class TicketsService {
     }
 
     return { data: ticket };
+  }
+
+  async getTicketHistory(id: string, user: { id: string; roles: string[] }) {
+    const ticket = await this.ticketsRepo.findById(this.databaseService.db, id);
+
+    if (!ticket || !canAccessTicket(user, ticket)) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    const db = this.databaseService.db;
+    const [historyRows, statusRows, messagesResult] = await Promise.all([
+      this.ticketHistoryRepo.findByTicketId(db, id),
+      this.statusHistoryRepo.findByTicketId(db, id),
+      this.messagesService.listByTicketId(id),
+    ]);
+
+    const events: Array<{
+      type: 'created' | 'status_change' | 'message';
+      id: string;
+      createdAt: Date;
+      payload: Record<string, unknown>;
+    }> = [];
+
+    for (const row of historyRows) {
+      events.push({
+        type: 'created',
+        id: row.id,
+        createdAt: row.createdAt,
+        payload: { action: row.action },
+      });
+    }
+
+    for (const row of statusRows) {
+      const createdAt =
+        'createdBy' in row && row.createdBy
+          ? (row.createdBy as Date)
+          : new Date(0);
+      events.push({
+        type: 'status_change',
+        id: row.id,
+        createdAt,
+        payload: {
+          oldStatus: row.oldStatus,
+          newStatus: row.newStatus,
+          changedBy: row.changedBy,
+        },
+      });
+    }
+
+    for (const msg of messagesResult.data) {
+      events.push({
+        type: 'message',
+        id: msg.id,
+        createdAt: msg.createdAt,
+        payload: {
+          content: msg.content,
+          authorId: msg.authorId,
+        },
+      });
+    }
+
+    events.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+
+    return {
+      data: events.map((e) => ({
+        type: e.type,
+        id: e.id,
+        createdAt: e.createdAt.toISOString(),
+        payload: e.payload,
+      })),
+    };
   }
 
   async updateTicket(
