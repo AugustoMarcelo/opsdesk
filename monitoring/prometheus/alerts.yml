@@ -4,9 +4,12 @@ groups:
       - alert: ApiHighErrorRate
         expr: |
           (
-            sum(rate(http_request_errors_total[5m]))
+            sum by (job, instance) (rate(http_request_errors_total{job="api"}[5m]))
             /
-            clamp_min(sum(rate(http_requests_total[5m])), 0.001)
+            clamp_min(
+              sum by (job, instance) (rate(http_requests_total{job="api"}[5m])),
+              0.001
+            )
           ) > 0.05
         for: 5m
         labels:
@@ -14,17 +17,43 @@ groups:
           service: api
         annotations:
           summary: "API error rate above 5%"
-          description: "API error ratio has been above 5% for 5 minutes."
+          description: "API error ratio on {{ $labels.instance }} has been above 5% for 5 minutes."
 
-      - alert: WorkerProcessingFailures
-        expr: increase(worker_failed_total[10m]) > 0
+      - alert: ApiHighLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le, job, instance) (
+              rate(http_request_duration_seconds_bucket{job="api"}[5m])
+            )
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "API p95 latency above 1s"
+          description: "API p95 latency on {{ $labels.instance }} has been above 1s for 5 minutes."
+
+      - alert: WorkerProcessingFailuresWarning
+        expr: sum by (job, instance) (increase(worker_failed_total{job="worker"}[10m])) > 0
         for: 2m
         labels:
           severity: warning
           service: worker
         annotations:
           summary: "Worker failures detected"
-          description: "Worker has failed at least one message in the last 10 minutes."
+          description: "Worker on {{ $labels.instance }} has failed at least one message in the last 10 minutes."
+
+      - alert: WorkerProcessingFailuresCritical
+        expr: sum by (job, instance) (increase(worker_failed_total{job="worker"}[10m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: worker
+        annotations:
+          summary: "Worker failure burst detected"
+          description: "Worker on {{ $labels.instance }} has failed more than 5 messages in the last 10 minutes."
 
       - alert: RealtimeDown
         expr: up{job="realtime"} == 0
@@ -34,4 +63,4 @@ groups:
           service: realtime
         annotations:
           summary: "Realtime service is down"
-          description: "Prometheus cannot scrape the realtime service target."
+          description: "Prometheus cannot scrape realtime target {{ $labels.instance }}."

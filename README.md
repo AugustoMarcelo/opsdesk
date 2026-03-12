@@ -596,24 +596,49 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets |
   - `OpsDesk Worker`
   - `OpsDesk Realtime`
 
+**Learning — Alerting runbook**
+
 **Smoke checks**
 
+- Prometheus rule loading: open `http://localhost:9090/rules` and confirm group `opsdesk-baseline-alerts` is present and healthy.
 - Prometheus targets: open `http://localhost:9090/targets` and confirm `api`, `worker`, `realtime` are `UP`.
-- API metrics: open `http://localhost:3000/metrics` and check `http_requests_total` and `http_request_errors_total`.
-- Worker metrics: open `http://localhost:3003/metrics` and check `worker_processed_total`, `worker_failed_total`.
+- API metrics: open `http://localhost:3000/metrics` and check `http_requests_total`, `http_request_errors_total`, and `http_request_duration_seconds_bucket`.
+- Worker metrics: open `http://localhost:3003/metrics` and check `worker_processed_total`, `worker_failed_total`, and `worker_rabbitmq_connected`.
 - Realtime metrics: open `http://localhost:3002/metrics` and check `realtime_active_connections`.
 
-**Controlled alert tests**
+**Controlled tests**
 
 - `ApiHighErrorRate`:
   - Generate 404/401 traffic for ~5 minutes (threshold is 5% over 5m), e.g.:
     - `while true; do curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/v1/does-not-exist; sleep 0.2; done`
-- `WorkerProcessingFailures`:
-  - Publish an invalid payload in RabbitMQ UI (`http://localhost:15672`, `guest/guest`) to exchange `opsdesk.events` with routing key `ticket.created`.
-  - Invalid JSON causes parse failure, retries, then increments `worker_failed_total`.
+- `ApiHighLatencyP95`:
+  - Hit the slow endpoint for ~5 minutes (default 1.5s delay per request):
+    - `while true; do curl -s -o /dev/null http://localhost:8888/api/health/slow; sleep 0.2; done`
+  - Optional: `?delay=2000` for 2s (e.g. `http://localhost:8888/api/health/slow?delay=2000`).
+  - Verify firing state in `http://localhost:9090/alerts`.
+  - Quick check query in Prometheus UI:
+    - `histogram_quantile(0.95, sum by (le, job, instance) (rate(http_request_duration_seconds_bucket{job="api"}[5m])))`
+- `WorkerProcessingFailuresWarning` and `WorkerProcessingFailuresCritical`:
+  - Publish invalid payloads in RabbitMQ UI (`http://localhost:15672`, `guest/guest`) to exchange `opsdesk.events` with routing key `ticket.created`.
+  - One/few failures should trigger warning; sustained bursts (>5 failures in 10m) should trigger critical.
 - `RealtimeDown`:
   - Stop realtime service for at least 2 minutes: `docker compose stop realtime`.
   - Start again after alert validation: `docker compose start realtime`.
+
+**Expected results**
+
+- `ApiHighErrorRate` fires as `warning` after condition holds for 5m and clears when error ratio drops.
+- `ApiHighLatencyP95` fires as `warning` when API p95 latency is above 1s for 5m.
+- `WorkerProcessingFailuresWarning` fires with at least one failure in 10m; `WorkerProcessingFailuresCritical` fires when failures exceed 5 in 10m.
+- `RealtimeDown` fires as `critical` when `up{job="realtime"} == 0` for 2m.
+- Alert instances include `job` and `instance` labels so you can identify the exact target in Alertmanager/Grafana.
+
+**If this fails**
+
+- No alert appears in Prometheus: verify rules are mounted to `/etc/prometheus/alerts.yml` and check `http://localhost:9090/rules` for parse errors.
+- Alert condition true but still `inactive`: check the `for` duration (`5m`/`2m`) and keep the failure condition stable long enough.
+- Worker alerts never fire: ensure invalid messages are actually consumed (check worker logs) and confirm `worker_failed_total` is increasing in Prometheus expression browser.
+- `RealtimeDown` not firing: verify scrape target is exactly `job="realtime"` in `prometheus.yml` and that Prometheus can no longer scrape `realtime:3002/metrics`.
 
 Alert rules are versioned in `monitoring/prometheus/alerts.yml`, and Grafana provisioning is versioned under `monitoring/grafana/provisioning`.
 
