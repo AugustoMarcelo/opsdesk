@@ -1,40 +1,19 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../src/db/database.module';
 import { DatabaseService } from '../../src/db/database.service';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
-import * as schema from '../../src/db/schema';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { createTestDb } from './test-db-schema';
 
 /**
- * Test Database Service that uses the test database URL
+ * Test Database Service that uses a per-run random schema on the main Postgres instance.
+ * Requires bootstrapTestSchema() to have run in globalSetup.
  */
 @Module({
   providers: [
     {
       provide: DatabaseService,
       useFactory: () => {
-        const connectionString = process.env.DATABASE_URL;
-        if (!connectionString) {
-          throw new Error(
-            'DATABASE_URL must be set in .env.test for e2e tests',
-          );
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-        const pool = new Pool({
-          connectionString,
-        });
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        const db: NodePgDatabase<typeof schema> = drizzle(pool, {
-          schema,
-          logger: false, // Disable logging in tests
-        });
-
-        return {
-          db,
-        } as DatabaseService;
+        const db = createTestDb();
+        return { db } as DatabaseService;
       },
     },
   ],
