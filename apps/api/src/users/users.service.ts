@@ -3,19 +3,35 @@ import { roles } from '../db/schema/roles';
 import { users } from '../db/schema/users';
 import { UsersRepository } from './users.repository';
 import { DatabaseService } from './../db/database.service';
+import { KeycloakAdminService } from './../auth/keycloak-admin.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersDto } from './dto/list-users.dto';
 import { hash } from 'bcrypt';
+
+const AUTH_MODE = process.env.AUTH_MODE ?? 'local';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly usersRepo: UsersRepository,
+    private readonly keycloakAdmin: KeycloakAdminService,
   ) {}
 
   async createUser(input: CreateUserDto) {
+    let externalId: string | undefined = input.externalId;
+
+    if (AUTH_MODE === 'keycloak') {
+      const keycloakUserId = await this.keycloakAdmin.createUser({
+        email: input.email,
+        username: input.email,
+        name: input.name,
+        password: input.password,
+      });
+      externalId = keycloakUserId;
+    }
+
     const passwordHash = await hash(input.password, 10);
     const user = await this.databaseService.db.transaction(async (tx) => {
       const [created] = await tx
@@ -23,7 +39,7 @@ export class UsersService {
         .values({
           email: input.email,
           name: input.name,
-          externalId: input.externalId,
+          ...(externalId != null && { externalId }),
           passwordHash,
         })
         .returning();

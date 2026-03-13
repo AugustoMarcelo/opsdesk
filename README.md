@@ -462,6 +462,45 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8888/api/v1/tickets |
 - **401 with token**: Token expired — app will attempt refresh; if refresh fails (e.g. refresh token expired), redirect to login. Also check `AUTH_MODE` mismatch.
 - **EACCES on API dist**: Run `make api-restart` to use Docker volume for build output
 
+**User provisioning with Keycloak**
+
+When `AUTH_MODE=keycloak`, `POST /v1/users` provisions users in Keycloak first, then mirrors them into the local `users` table with `externalId` set to the Keycloak user ID.
+
+**Required env vars for user provisioning**
+
+- `AUTH_MODE=keycloak`
+- `OIDC_ISSUER` (e.g. `http://keycloak:8080/realms/opsdesk`)
+- `KEYCLOAK_ADMIN_USERNAME` (default: `admin`)
+- `KEYCLOAK_ADMIN_PASSWORD` (default: `admin`)
+
+**Smoke test**
+
+```bash
+# Ensure Keycloak is running and AUTH_MODE=keycloak in .env
+TOKEN=$(curl -s -X POST http://localhost:8888/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@opsdesk.dev","password":"123456"}' | jq -r '.accessToken')
+# Or use Keycloak OIDC flow to obtain a token
+
+curl -s -X POST http://localhost:8888/api/v1/users \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"newuser@example.com","name":"New User","password":"secret123","roleId":"<role-uuid>"}' | jq .
+# Expected: 201 + user object with id, email, name, externalId (Keycloak user ID)
+```
+
+**Expected results**
+
+- New user appears in Keycloak Admin Console (Users) with the given email and username.
+- Local `users` row has `external_id` equal to the Keycloak user ID.
+- User can log in via Keycloak OIDC flow.
+
+**If this fails**
+
+- **400 "Failed to obtain Keycloak admin token"**: Check `KEYCLOAK_ADMIN_USERNAME` and `KEYCLOAK_ADMIN_PASSWORD` match Keycloak Admin Console credentials; ensure Keycloak is reachable from the API container (e.g. `keycloak:8080`).
+- **400 "User with email or username already exists"**: Email or username is already in Keycloak; use a different value.
+- **400 "Invalid OIDC_ISSUER format"**: Ensure `OIDC_ISSUER` is `https://host/realms/realm` or `http://host/realms/realm`.
+
 ---
 
 ### EPIC 4 — WebSockets (Realtime)

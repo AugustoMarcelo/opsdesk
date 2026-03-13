@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -27,7 +27,9 @@ export class CreateUserDto {
   @ApiProperty({
     example: '123456',
     description: 'External ID. Keycloak for this current solution',
+    required: false,
   })
+  @IsOptional()
   @IsString()
   externalId?: string;
 }
