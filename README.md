@@ -617,7 +617,7 @@ curl -s -X POST http://localhost:8888/api/v1/users \
 
 **US8.3 – Logs**
 
-- [ ] Loki (optional) + log dashboard — not yet implemented.
+- [x] Loki (optional) + log dashboard.
 - [x] Standard log fields:
   - [x] `service`
   - [x] `request_id`
@@ -634,6 +634,49 @@ curl -s -X POST http://localhost:8888/api/v1/users \
   - `OpsDesk API`
   - `OpsDesk Worker`
   - `OpsDesk Realtime`
+  - `OpsDesk Logs` (Loki)
+- [x] Loki + Promtail: logs from `api`, `worker`, `realtime` collected and queryable in Grafana.
+
+**Learning — Loki logs**
+
+Log pipeline:
+
+```mermaid
+flowchart LR
+  api["API (NestJS + Pino)"] --> dockerLogs["Docker logs"]
+  worker["Worker (NestJS)"] --> dockerLogs
+  realtime["Realtime (NestJS)"] --> dockerLogs
+  dockerLogs --> promtail["Promtail"]
+  promtail --> loki["Loki"]
+  loki --> grafana["Grafana (Logs Dashboard)"]
+```
+
+**Smoke checks**
+
+- Start stack: `docker compose up -d`.
+- Open Grafana `http://localhost:3001`, go to **Connections** → **Data sources** and verify `Loki-Logs` is Healthy.
+- Run a few API calls (`GET /api/health`, `GET /api/v1/tickets` with a token) and confirm logs appear in **Explore** (Loki datasource) with `{service="api"}`.
+- Open the **OpsDesk Logs** dashboard and verify recent logs from `api`, `worker`, and `realtime` appear.
+
+**Controlled tests**
+
+- **Error logs**: Call a non-existent route, e.g. `curl -s http://localhost:8888/api/v1/does-not-exist`. In Grafana Explore (Loki), query `{service="api"} |= "error"` or `{service="api"} |= "404"` to see the corresponding log lines.
+- **Request correlation**: Issue a request with a custom ID: `curl -H "x-request-id: my-trace-123" http://localhost:8888/api/health -v` and copy the `x-request-id` from the response. In the OpsDesk Logs dashboard, enter `my-trace-123` in the **Request ID** box to filter API logs for that request.
+- **Ticket lifecycle**: Create a ticket, change its status, send a message. Query `{service="api"}` and `{service="worker"}` to see the flow across services.
+
+**Expected results**
+
+- Logs from `api`, `worker`, and `realtime` appear in Grafana with consistent labels (`service`, `container`, `stream`).
+- You can filter by `request_id` to see all log lines for a single API request.
+- Dashboards update in near real-time as you generate traffic.
+
+**If this fails**
+
+- **No logs in Loki**: Ensure `api`, `worker`, and `realtime` containers are running. Check Promtail logs: `docker compose logs promtail`. On Linux, Promtail needs access to `/var/lib/docker/containers`; ensure Docker socket and containers dir are mounted.
+- **Loki-Logs datasource error**: Verify Loki is up (`docker compose ps loki`) and reachable from Grafana (`http://loki:3100`). Restart Grafana if the datasource was added before Loki started.
+- **Missing `request_id` in logs**: Ensure `requestIdMiddleware` runs before the logger in `main.ts`. The API logger uses `genReqId` to read `x-request-id` from the request.
+
+See [docs/EPIC8-LOGS-LOKI-LEARNING-GUIDE.md](docs/EPIC8-LOGS-LOKI-LEARNING-GUIDE.md) for configuration details and example Loki queries.
 
 **Learning — Alerting runbook**
 
@@ -753,7 +796,7 @@ docker compose up
   - Swagger: `http://localhost:8888/api/docs`
   - Health: `http://localhost:8888/api/health`
   - WebSocket: `http://localhost:8888/ws` (Socket.IO path `/ws`)
-- **Direct access** (for development): Web UI `:5173`, API `:3000`, Realtime `:3002`, Grafana `:3001`, Prometheus `:9090`.
+- **Direct access** (for development): Web UI `:5173`, API `:3000`, Realtime `:3002`, Grafana `:3001`, Prometheus `:9090`, Loki `:3100`.
 
 For the Web UI, use `AUTH_MODE=local` and run `pnpm db:seed` to create the admin user (`admin@opsdesk.dev` / `123456`).
 

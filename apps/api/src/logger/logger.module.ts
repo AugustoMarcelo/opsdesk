@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Module } from '@nestjs/common';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 
@@ -10,6 +11,13 @@ import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
           process.env.NODE_ENV !== 'production'
             ? { target: 'pino-pretty' }
             : undefined,
+        genReqId: (req) => {
+          const id = req.headers['x-request-id'];
+          const value = Array.isArray(id) ? id[0] : id;
+          return (
+            (typeof value === 'string' ? value : undefined) ?? randomUUID()
+          );
+        },
       },
     }),
   ],

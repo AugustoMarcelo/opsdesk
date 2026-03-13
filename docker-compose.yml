@@ -138,6 +138,31 @@ services:
     networks:
       - opsdesk
 
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: opsdesk-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - opsdesk
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: opsdesk-promtail
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
+    networks:
+      - opsdesk
+
   grafana:
     image: grafana/grafana:latest
     container_name: opsdesk-grafana
@@ -152,6 +177,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
     depends_on:
       - prometheus
+      - loki
     networks:
       - opsdesk
 
@@ -194,6 +220,7 @@ volumes:
   postgres_data:
   rabbitmq_data:
   grafana_data:
+  loki_data:
   keycloak_data:
   web_node_modules:
 
